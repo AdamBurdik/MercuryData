@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,5 +39,9 @@ public interface Codec<T> {
 
 	default @NotNull Codec<List<T>> list() {
 		return new CodecImpl.ListCodec<>(this);
+	}
+
+	default <V> @NotNull Codec<Map<T, V>> map(@NotNull Codec<V> valueCodec) {
+		return new CodecImpl.MapCodec<>(this, valueCodec);
 	}
 }

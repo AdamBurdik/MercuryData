@@ -1,16 +1,10 @@
 package me.adamix.mercury.data.codec;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class CodecImpl {
 	protected static final Codec<String> STRING = new Codec<String>() {
@@ -175,6 +169,39 @@ public class CodecImpl {
 			}
 
 			return list;
+		}
+	}
+
+	record MapCodec<K, V>(@NotNull Codec<K> keyCodec, @NotNull Codec<V> valueCodec) implements Codec<Map<K, V>> {
+
+		@Override
+		public JsonElement encode(Map<K, V> map) {
+			JsonObject jsonObject = new JsonObject();
+			map.forEach((key, value) -> {
+				jsonObject.add(keyCodec.encode(key).toString(), valueCodec.encode(value));
+			});
+
+			return jsonObject;
+		}
+
+		@Override
+		public Map<K, V> decode(JsonElement json) {
+			if (!json.isJsonObject()) {
+				return null;
+			}
+
+			Map<K, V> decodedMap = new HashMap<>();
+
+			JsonObject jsonObject = json.getAsJsonObject();
+
+			for (String key : jsonObject.keySet()) {
+				JsonElement keyJson = JsonParser.parseString(key);
+				JsonElement valueJson = jsonObject.get(key);
+
+				decodedMap.put(keyCodec.decode(keyJson), valueCodec.decode(valueJson));
+			}
+
+			return decodedMap;
 		}
 	}
 }
