@@ -3,14 +3,40 @@
 # MercuryData
 Simple library to easily access and manage databases.
 
+# How To Use
+1. Add MercuryData as a dependency to your project, using jitpack
+```kotlin
+maven { url = uri("https://www.jitpack.io") }
+
+dependencies {
+    implementation("com.github.AdamBurdik:MercuryData:api:Tag")
+    
+    // And database implementation
+    // For example, redis
+    implementation("com.github.AdamBurdik:MercuryData:redis:Tag")
+}
+```
+2. Create store module (For example, redis)
+```java
+RedisStoreModule storeModule = new RedisStoreModule("localhost", 6379);
+```
+3. Create a database with previously created store module
+```java
+MercuryDatabase database = MercuryDatabase.create(storeModule);
+```
+4. Create a collection
+```java
+MercuryCollection collection = database.getCollection("example_collection");
+```
+
 # Examples
 Library is heavily designed to use codecs.
 You can use built-in codecs or define your own.
 
 ```java
 record Person(String name, int balance, boolean isAdult) {
-	public static Codec<Person> CODEC = StructCodec.struct(
-			"name", Codec.STRING, Person::name,
+    public static Codec<Person> CODEC = StructCodec.struct(
+            "name", Codec.STRING, Person::name,
             "balance", Codec.INT, Person::balance,
             "is_adult", Codec.BOOLEAN, Person::isAdult,
             Person::new
@@ -81,32 +107,6 @@ collection.removeSync(Key.of("example_key"))
 3. Build the module
 ```bash
    gradlew build
-```
-
-# How To Use
-1. Add MercuryData as a dependency to your project, using jitpack
-```kotlin
-maven { url = uri("https://www.jitpack.io") }
-
-dependencies {
-    implementation("com.github.AdamBurdik:MercuryData:api:Tag")
-    
-    // And database implementation
-    // For example, redis
-    implementation("com.github.AdamBurdik:MercuryData:redis:Tag")
-}
-```
-2. Create store module
-```java
-RedisStoreModule storeModule = new RedisStoreModule("localhost", 6379);
-```
-3. Create a database with previously created store module
-```java
-MercuryDatabase database = MercuryDatabase.create(storeModule);
-```
-4. Create a collection
-```java
-MercuryCollection collection = database.getCollection("example_collection");
 ```
 
 # License
