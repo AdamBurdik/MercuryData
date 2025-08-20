@@ -26,7 +26,7 @@ public class Key {
 
 	@Override
 	public String toString() {
-		return String.join(":", parts);
+		return String.join(".", parts);
 	}
 
 	public static Key parse(@NotNull String string) {
