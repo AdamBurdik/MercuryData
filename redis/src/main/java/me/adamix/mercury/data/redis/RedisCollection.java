@@ -77,7 +77,7 @@ public class RedisCollection implements MercuryCollection {
 	@Override
 	public @NotNull Optional<JsonElement> getSync(@NotNull Key key) {
 		try (Jedis jedis = jedisPool.getResource()) {
-			Map<String, String> map = jedis.hgetAll(key.toString());
+			Map<String, String> map = jedis.hgetAll(key.withCollectionName(this.name));
 			if (map == null) {
 				return Optional.empty();
 			}
