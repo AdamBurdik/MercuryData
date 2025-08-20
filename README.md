@@ -42,3 +42,8 @@ MercuryDatabase database = MercuryDatabase.create(storeModule);
 ```java
 MercuryCollection collection = database.getCollection("example_collection");
 ```
+
+# License
+MercuryData is licensed under the MIT License, except for the codec implementation,  
+which is derived from Minestom and licensed under the Apache License 2.0.  
+See the [LICENSE](LICENSE) file for details.

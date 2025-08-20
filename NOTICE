@@ -1,0 +1,5 @@
+This project includes code derived from Minestom (https://github.com/Minestom/Minestom),
+licensed under the Apache License, Version 2.0.
+
+Affected components:
+- Codec API implementation (StructCodec, Codec classes, and related files)
