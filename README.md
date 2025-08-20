@@ -3,6 +3,60 @@
 # MercuryData
 Simple library to easily access and manage databases.
 
+# Examples
+Library is heavily designed to use codecs.
+You can use built-in codecs or define your own.
+
+```java
+record Person(String name, int balance, boolean isAdult) {
+	public static Codec<Person> CODEC = StructCodec.struct(
+			"name", Codec.STRING, Person::name,
+            "balance", Codec.INT, Person::balance,
+            "is_adult", Codec.BOOLEAN, Person::isAdult,
+            Person::new
+    );
+}
+```
+With defined codec, you can use database calls much easily
+
+Currently, there are five different operations you can execute:
+- Set
+- Get
+- Remove
+- UpdateField
+- Find
+
+You can execute operations either synchronously or asynchronously using CompletableFuture.
+
+
+```java
+MercuryCollection collection = database.getCollection("example_collection");
+
+var person = new Person("John", 1000, true);
+
+// Setting value by key
+collection.setSync(Key.of("example_key"), Person.CODEC, person);
+
+// Getting value by key
+Optional<Person> result = collection.getSync(Key.of("example_key"), Person.CODEC);
+
+// Removing value by key
+collection.remove(Key.of("example_key"));
+
+// Updating value field
+// This example changes field name from "John" to "Doe"
+collection.updateField(
+		Key.of("example_key"),
+        UpdateField.of(Key.of("name"), Codec.STRING, "Doe")
+);
+
+// Finding
+// This example gets all people with balance greater than 150
+QueryResult<Person> result = collection.find(Person.CODEC)
+		.where(Key.of("balance"), Codec.INT, bal -> bal > 150)
+		.execute();
+```
+
 # How To Build
 1. Clone the repository
 ```bash
