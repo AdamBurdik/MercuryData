@@ -33,6 +33,12 @@ public class RedisFindQueryBuilder<T> implements FindQueryBuilder<T> {
 	}
 
 	@Override
+	public @NotNull <U> FindQueryBuilder<T> withFieldFilter(@NotNull FieldFilter<U> filter) {
+		fieldFilters.add(filter);
+		return this;
+	}
+
+	@Override
 	public @NotNull FindQueryBuilder<T> limit(int limit) {
 		this.limit = limit;
 		return this;
