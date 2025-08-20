@@ -6,6 +6,7 @@ import me.adamix.mercury.data.redis.RedisCollection;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 public class RedisStoreModule implements StoreModule {
@@ -13,12 +14,27 @@ public class RedisStoreModule implements StoreModule {
 	private final @NotNull JedisPool pool;
 
 	public RedisStoreModule(@NotNull String address, int port) {
+		this(new JedisPool(address, port));
 		LOGGER.debug("Redis store module [{}:{}] created successfully", address, port);
-		this.pool = new JedisPool(address, port);
 	}
 
 	public RedisStoreModule(@NotNull JedisPool pool) {
 		this.pool = pool;
+		ping();
+	}
+
+	public void ping() {
+		try (Jedis jedis = pool.getResource()) {
+			String response = jedis.ping();
+			if ("PONG".equals(response)) {
+				LOGGER.info("Redis has been connected");
+				System.out.println("Redis connection is working!");
+			} else {
+				LOGGER.error("Unexpected Redis ping response: {}", response);
+			}
+		} catch (Exception e) {
+			LOGGER.error("Failed to connect to Redis", e);
+		}
 	}
 
 	@Override
