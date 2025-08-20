@@ -4,9 +4,9 @@ import com.google.gson.JsonElement;
 import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.operation.update.UpdateField;
+import me.adamix.mercury.data.query.FindQueryBuilder;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,4 +37,6 @@ public interface MercuryCollection {
 
 	@NotNull CompletableFuture<Boolean> remove(@NotNull Key key);
 	boolean removeSync(@NotNull Key key);
+
+	<T> @NotNull FindQueryBuilder<T> find(@NotNull Codec<T> codec);
 }
