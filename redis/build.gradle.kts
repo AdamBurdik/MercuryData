@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "me.adamix.mercury.data.redis"
-version = "0.0.1"
+version = "1.0.0"
 
 repositories {
 }
