@@ -41,11 +41,11 @@ collection.setSync(Key.of("example_key"), Person.CODEC, person);
 Optional<Person> result = collection.getSync(Key.of("example_key"), Person.CODEC);
 
 // Removing value by key
-collection.remove(Key.of("example_key"));
+collection.removeSync(Key.of("example_key"));
 
 // Updating value field
 // This example changes field name from "John" to "Doe"
-collection.updateField(
+collection.updateFieldSync(
 		Key.of("example_key"),
         UpdateField.of(Key.of("name"), Codec.STRING, "Doe")
 );
@@ -55,6 +55,18 @@ collection.updateField(
 QueryResult<Person> result = collection.find(Person.CODEC)
 		.where(Key.of("balance"), Codec.INT, bal -> bal > 150)
 		.execute();
+```
+
+Even the library is designed to use codecs, you don't need to.
+You can pass JsonElement to most of the operations.
+```java
+JsonElement jsonElement = ...;
+
+collection.setSync(Key.of("example_key"), jsonElement);
+
+JsonElement found = collection.getSync(Key.of("example_key"));
+
+collection.removeSync(Key.of("example_key"))
 ```
 
 # How To Build
