@@ -3,9 +3,7 @@ package me.adamix.mercury.data.redis;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
 import me.adamix.mercury.data.MercuryCollection;
-import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.operation.update.UpdateField;
 import me.adamix.mercury.data.redis.utils.JsonUtils;
@@ -15,15 +13,16 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class RedisCollection implements MercuryCollection {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RedisCollection.class);
+	private final @NotNull String name;
 	private final @NotNull JedisPool jedisPool;
 
-	public RedisCollection(@NotNull JedisPool jedisPool) {
+	public RedisCollection(@NotNull String name, @NotNull JedisPool jedisPool) {
+		this.name = name;
 		this.jedisPool = jedisPool;
 	}
 
@@ -40,7 +39,7 @@ public class RedisCollection implements MercuryCollection {
 
 		try (Jedis jedis = jedisPool.getResource()) {
 			if (!jsonElement.isJsonObject()) {
-				jedis.set(key.toString(), jsonElement.toString());
+				jedis.set(key.withCollectionName(name), jsonElement.toString());
 			} else {
 				hsetSync(jedis, key, Key.empty(), jsonElement.getAsJsonObject());
 			}
@@ -55,7 +54,7 @@ public class RedisCollection implements MercuryCollection {
 			JsonElement jsonElement = jsonObject.get(elementKey);
 
 			if (!jsonElement.isJsonObject()) {
-				jedis.hset(key.toString(), childKey.addPart(elementKey).toString(), jsonElement.toString());
+				jedis.hset(key.withCollectionName(name), childKey.addPart(elementKey).toString(), jsonElement.toString());
 			} else {
 				hsetSync(jedis, key, childKey.addPart(elementKey), jsonElement.getAsJsonObject());
 			}
@@ -99,14 +98,14 @@ public class RedisCollection implements MercuryCollection {
 	public <T> void updateFieldSync(@NotNull Key key, @NotNull UpdateField<T> field, boolean insertIfAbsent) {
 		try (Jedis jedis = jedisPool.getResource()) {
 			JsonElement jsonElement = field.codec().encode(field.value());
-			final String stringKey = key.toString();
+			final String stringKey = key.withCollectionName(this.name);
 			final String fieldKey = field.key().toString();
 
 			if (!jedis.hexists(stringKey, fieldKey) && !insertIfAbsent) {
 				return;
 			}
 
-			jedis.hset(key.toString(), field.key().toString(), jsonElement.toString());
+			jedis.hset(stringKey, field.key().toString(), jsonElement.toString());
 		}
 	}
 
@@ -118,7 +117,7 @@ public class RedisCollection implements MercuryCollection {
 	@Override
 	public boolean removeSync(@NotNull Key key) {
 		try (Jedis jedis = jedisPool.getResource()) {
-			final String stringKey = key.toString();
+			final String stringKey = key.withCollectionName(this.name);
 
 			Map<String, String> map = jedis.hgetAll(stringKey);
 			if (map == null) {

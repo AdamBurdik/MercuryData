@@ -23,7 +23,7 @@ public class RedisStoreModule implements StoreModule {
 
 	@Override
 	public @NotNull MercuryCollection createCollection(@NotNull String name) {
-		return new RedisCollection(pool);
+		return new RedisCollection(name, pool);
 	}
 
 	@Override

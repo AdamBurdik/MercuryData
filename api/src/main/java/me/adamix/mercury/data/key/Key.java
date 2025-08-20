@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class Key {
 	private final List<String> parts;
@@ -24,9 +25,27 @@ public class Key {
 		return parts;
 	}
 
+	public @NotNull String withCollectionName(@NotNull String collectionName) {
+		var list = new ArrayList<>(parts);
+		list.addFirst(collectionName);
+		return new Key(list).toString();
+	}
+
 	@Override
 	public String toString() {
 		return String.join(".", parts);
+	}
+
+	@Override
+	public boolean equals(Object object) {
+		if (object == null || getClass() != object.getClass()) return false;
+		Key key = (Key) object;
+		return Objects.equals(parts, key.parts);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(parts);
 	}
 
 	public static Key parse(@NotNull String string) {
