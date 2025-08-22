@@ -85,7 +85,7 @@ public class RedisCollection implements MercuryCollection {
 			JsonObject jsonObject = new JsonObject();
 
 			map.forEach((childKey, value) -> {
-				JsonUtils.addNestedProperty(jsonObject, childKey, JsonParser.parseString(value), "\\:");
+				JsonUtils.addNestedProperty(jsonObject, childKey, JsonParser.parseString(value), "\\.");
 			});
 
 			return Optional.of(jsonObject);
