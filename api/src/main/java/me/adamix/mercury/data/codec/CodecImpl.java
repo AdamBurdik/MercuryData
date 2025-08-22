@@ -1,6 +1,7 @@
 package me.adamix.mercury.data.codec;
 
 import com.google.gson.*;
+import me.adamix.mercury.data.utils.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,7 +179,7 @@ public class CodecImpl {
 		public JsonElement encode(Map<K, V> map) {
 			JsonObject jsonObject = new JsonObject();
 			map.forEach((key, value) -> {
-				jsonObject.add(keyCodec.encode(key).toString(), valueCodec.encode(value));
+				jsonObject.add(JsonUtils.getRawValue(keyCodec.encode(key)), valueCodec.encode(value));
 			});
 
 			return jsonObject;
