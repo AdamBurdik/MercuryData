@@ -31,6 +31,10 @@ public class Key {
 		return new Key(list).toString();
 	}
 
+	public @NotNull Key stripCollectionName() {
+		return new Key(parts.subList(1, parts.size()));
+	}
+
 	@Override
 	public String toString() {
 		return String.join(".", parts);

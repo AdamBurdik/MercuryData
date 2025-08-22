@@ -153,6 +153,11 @@ public class RedisCollection implements MercuryCollection {
 						continue;
 					}
 
+					Optional<T> opt = getSync(Key.parse(key).stripCollectionName(), codec);
+					if (opt.isEmpty()) {
+						continue;
+					}
+
 					AtomicBoolean filtersPassed = new AtomicBoolean(true);
 
 					map.forEach((fieldKey, fieldValue) -> {
@@ -171,7 +176,7 @@ public class RedisCollection implements MercuryCollection {
 						continue;
 					}
 
-					collection.add(getSync(Key.of(key), codec).orElseThrow());
+					collection.add(opt.get());
 				}
 
 				return new RedisQueryResult<>(collection);
