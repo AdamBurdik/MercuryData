@@ -4,10 +4,7 @@ import com.google.gson.JsonElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public interface Codec<T> {
 	Codec<String> STRING = CodecImpl.STRING;
@@ -39,6 +36,10 @@ public interface Codec<T> {
 
 	default @NotNull Codec<List<T>> list() {
 		return new CodecImpl.ListCodec<>(this);
+	}
+
+	default @NotNull Codec<Set<T>> set() {
+		return new CodecImpl.SetCodec<>(this);
 	}
 
 	default <V> @NotNull Codec<Map<T, V>> map(@NotNull Codec<V> valueCodec) {
