@@ -173,6 +173,29 @@ public class CodecImpl {
 		}
 	}
 
+	record SetCodec<T>(@NotNull Codec<T> inner) implements Codec<Set<T>> {
+
+		@Override
+		public JsonElement encode(Set<T> set) {
+			JsonArray array = new JsonArray();
+			for (T value : set) {
+				array.add(inner.encode(value));
+			}
+			return array;
+		}
+
+		@Override
+		public Set<T> decode(JsonElement json) {
+			JsonArray array = json.getAsJsonArray();
+			Set<T> set = new HashSet<>(array.size());
+			for (JsonElement element : array) {
+				set.add(inner.decode(element));
+			}
+
+			return set;
+		}
+	}
+
 	record MapCodec<K, V>(@NotNull Codec<K> keyCodec, @NotNull Codec<V> valueCodec) implements Codec<Map<K, V>> {
 
 		@Override
