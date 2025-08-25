@@ -114,6 +114,9 @@ public class RedisCollection implements MercuryCollection {
 			}
 
 			jedis.hset(stringKey, field.key().toString(), jsonElement.toString());
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while updating field redis collection", e);
+			throw e;
 		}
 	}
 
@@ -135,6 +138,9 @@ public class RedisCollection implements MercuryCollection {
 			for (String elementKey : map.keySet()) {
 				jedis.hdel(stringKey, elementKey);
 			}
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while removing from redis collection", e);
+			throw e;
 		}
 
 		return true;
@@ -180,6 +186,9 @@ public class RedisCollection implements MercuryCollection {
 				}
 
 				return new RedisQueryResult<>(collection);
+			} catch (Exception e) {
+				LOGGER.error("Exception occurred while searching in redis collection", e);
+				throw e;
 			}
 		});
 	}
