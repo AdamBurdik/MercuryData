@@ -28,7 +28,6 @@ public class RedisStoreModule implements StoreModule {
 			String response = jedis.ping();
 			if ("PONG".equals(response)) {
 				LOGGER.info("Redis has been connected");
-				System.out.println("Redis connection is working!");
 			} else {
 				LOGGER.error("Unexpected Redis ping response: {}", response);
 			}

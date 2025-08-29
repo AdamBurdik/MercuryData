@@ -160,9 +160,6 @@ public class RedisCollectionTest {
 					UpdateField.of("string_list", Codec.STRING.list(), List.of()));
 		});
 
-		System.out.println("AddItem: " + addItemThread.getName());
-		System.out.println("Clear: " + clearInventoryThread.getName());
-
 		addItemThread.start();
 
 		clearInventoryThread.start();
