@@ -8,6 +8,7 @@ import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.operation.update.UpdateField;
 import me.adamix.mercury.data.query.FindQueryBuilder;
+import me.adamix.mercury.data.query.QueryResult;
 import me.adamix.mercury.data.query.filter.FieldFilter;
 import me.adamix.mercury.data.redis.query.RedisFindQueryBuilder;
 import me.adamix.mercury.data.redis.query.RedisQueryResult;
@@ -23,11 +24,13 @@ import redis.clients.jedis.resps.ScanResult;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class RedisCollection implements MercuryCollection {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RedisCollection.class);
 	private final @NotNull String name;
 	private final @NotNull JedisPool jedisPool;
+	public final @NotNull ReentrantLock lock = new ReentrantLock();
 
 	public RedisCollection(@NotNull String name, @NotNull JedisPool jedisPool) {
 		this.name = name;
@@ -44,6 +47,7 @@ public class RedisCollection implements MercuryCollection {
 	@Override
 	public void setSync(@NotNull Key key, @NotNull JsonElement jsonElement) {
 		LOGGER.debug("Redis write operation - key: {}, value: {}", key, jsonElement);
+		lock.lock();
 
 		try (Jedis jedis = jedisPool.getResource()) {
 			if (!jsonElement.isJsonObject()) {
@@ -54,6 +58,8 @@ public class RedisCollection implements MercuryCollection {
 		} catch (Exception e) {
 			LOGGER.error("Exception occurred while writing to redis collection", e);
 			throw e;
+		} finally {
+			lock.unlock();
 		}
 	}
 
@@ -76,6 +82,7 @@ public class RedisCollection implements MercuryCollection {
 
 	@Override
 	public @NotNull Optional<JsonElement> getSync(@NotNull Key key) {
+		lock.lock();
 		try (Jedis jedis = jedisPool.getResource()) {
 			Map<String, String> map = jedis.hgetAll(key.withCollectionName(this.name));
 			if (map == null) {
@@ -92,6 +99,8 @@ public class RedisCollection implements MercuryCollection {
 		} catch (Exception e) {
 			LOGGER.error("Exception occurred while reading from redis collection", e);
 			throw e;
+		} finally {
+			lock.unlock();
 		}
 	}
 
@@ -104,8 +113,29 @@ public class RedisCollection implements MercuryCollection {
 
 	@Override
 	public <T> void updateFieldSync(@NotNull Key key, @NotNull UpdateField<T> field, boolean insertIfAbsent) {
+		lock.lock();
 		try (Jedis jedis = jedisPool.getResource()) {
-			JsonElement jsonElement = field.codec().encode(field.value());
+			T value;
+			if (field.isConstant()) {
+				 value = field.function().apply(null);
+			} else {
+				Map<String, String> map = jedis.hgetAll(key.withCollectionName(this.name));
+				if (map == null) {
+					return;
+				}
+
+				JsonObject jsonObject = new JsonObject();
+
+				map.forEach((childKey, v) -> {
+					JsonUtils.addNestedProperty(jsonObject, childKey, JsonParser.parseString(v), "\\.");
+				});
+
+				String rawJson = map.get(field.key().toString());
+
+				value = field.function().apply(field.codec().decode(JsonParser.parseString(rawJson)));
+			}
+
+			JsonElement jsonElement = field.codec().encode(value);
 			final String stringKey = key.withCollectionName(this.name);
 			final String fieldKey = field.key().toString();
 
@@ -117,6 +147,8 @@ public class RedisCollection implements MercuryCollection {
 		} catch (Exception e) {
 			LOGGER.error("Exception occurred while updating field redis collection", e);
 			throw e;
+		} finally {
+			lock.unlock();
 		}
 	}
 
@@ -127,6 +159,7 @@ public class RedisCollection implements MercuryCollection {
 
 	@Override
 	public boolean removeSync(@NotNull Key key) {
+		lock.lock();
 		try (Jedis jedis = jedisPool.getResource()) {
 			final String stringKey = key.withCollectionName(this.name);
 
@@ -141,6 +174,8 @@ public class RedisCollection implements MercuryCollection {
 		} catch (Exception e) {
 			LOGGER.error("Exception occurred while removing from redis collection", e);
 			throw e;
+		} finally {
+			lock.unlock();
 		}
 
 		return true;
@@ -149,17 +184,24 @@ public class RedisCollection implements MercuryCollection {
 	@Override
 	public <T> @NotNull FindQueryBuilder<T> find(@NotNull Codec<T> codec) {
 		return new RedisFindQueryBuilder<>(codec, query -> {
+			lock.lock();
 			try (Jedis jedis = jedisPool.getResource()) {
 				ScanParams params = new ScanParams().match(this.name + ".*").count(Integer.MAX_VALUE);
 
-				Collection<T> collection = new ArrayList<>();
-				for (String key : getAllKeys(jedis, params)) {
-					Map<String, String> map = jedis.hgetAll(key);
+				Collection<QueryResult.Entry<T>> collection = new ArrayList<>();
+				for (String rawKey : getAllKeys(jedis, params)) {
+					Map<String, String> map = jedis.hgetAll(rawKey);
 					if (map == null) {
 						continue;
 					}
 
-					Optional<T> opt = getSync(Key.parse(key).stripCollectionName(), codec);
+					JsonObject jsonObject = new JsonObject();
+
+					map.forEach((childKey, value) -> {
+						JsonUtils.addNestedProperty(jsonObject, childKey, JsonParser.parseString(value), "\\.");
+					});
+
+					Optional<T> opt = codec.decodeOptional(jsonObject);
 					if (opt.isEmpty()) {
 						continue;
 					}
@@ -182,13 +224,17 @@ public class RedisCollection implements MercuryCollection {
 						continue;
 					}
 
-					collection.add(opt.get());
+					Key key = Key.parse(rawKey).stripCollectionName();
+
+					collection.add(new QueryResult.Entry<>(key, opt.get()));
 				}
 
 				return new RedisQueryResult<>(collection);
 			} catch (Exception e) {
 				LOGGER.error("Exception occurred while searching in redis collection", e);
 				throw e;
+			} finally {
+				lock.unlock();
 			}
 		});
 	}
@@ -202,13 +248,18 @@ public class RedisCollection implements MercuryCollection {
 
 		List<String> allKeys = new ArrayList<>();
 
-		do {
-			// Gets all keys from redis from this collection
-			ScanResult<String> scanResult = jedis.scan(cursor, params);
-			allKeys.addAll(scanResult.getResult());
-			cursor = scanResult.getCursor();
+		try {
+			do {
+				// Gets all keys from redis from this collection
+				ScanResult<String> scanResult = jedis.scan(cursor, params);
+				allKeys.addAll(scanResult.getResult());
+				cursor = scanResult.getCursor();
 
-		} while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+			} while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while getting all keys in redis collection", e);
+			throw e;
+		}
 
 		return allKeys;
 	}
