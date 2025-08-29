@@ -210,7 +210,7 @@ public class CodecImpl {
 
 		@Override
 		public Map<K, V> decode(JsonElement json) {
-			if (!json.isJsonObject()) {
+			if (json == null || json.isJsonNull() || !json.isJsonObject()) {
 				return null;
 			}
 
