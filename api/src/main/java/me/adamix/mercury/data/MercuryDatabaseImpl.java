@@ -7,10 +7,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MercuryDatabaseImpl implements MercuryDatabase {
 	private static final Logger LOGGER = LoggerFactory.getLogger(MercuryDatabaseImpl.class);
-	private final @NotNull Map<String, MercuryCollection> collectionMap = new HashMap<>();
+	private final @NotNull Map<String, MercuryCollection> collectionMap = new ConcurrentHashMap<>();
 	private final @NotNull StoreModule module;
 
 	public MercuryDatabaseImpl(@NotNull StoreModule module) {
