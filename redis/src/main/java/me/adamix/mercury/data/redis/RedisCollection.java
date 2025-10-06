@@ -131,8 +131,12 @@ public class RedisCollection implements MercuryCollection {
 				});
 
 				String rawJson = map.get(field.key().toString());
+				JsonElement parsed = new JsonObject();
+				if (rawJson != null) {
+					parsed = JsonParser.parseString(rawJson);
+				}
 
-				value = field.function().apply(field.codec().decode(JsonParser.parseString(rawJson)));
+				value = field.function().apply(field.codec().decode(parsed));
 			}
 
 			JsonElement jsonElement = field.codec().encode(value);
@@ -145,6 +149,7 @@ public class RedisCollection implements MercuryCollection {
 
 			jedis.hset(stringKey, field.key().toString(), jsonElement.toString());
 		} catch (Exception e) {
+			e.printStackTrace();
 			LOGGER.error("Exception occurred while updating field redis collection", e);
 			throw e;
 		} finally {
