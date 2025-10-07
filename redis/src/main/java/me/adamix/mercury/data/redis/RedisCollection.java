@@ -14,6 +14,7 @@ import me.adamix.mercury.data.redis.query.RedisFindQueryBuilder;
 import me.adamix.mercury.data.redis.query.RedisQueryResult;
 import me.adamix.mercury.data.redis.utils.JsonUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -124,19 +125,19 @@ public class RedisCollection implements MercuryCollection {
 					return;
 				}
 
-				JsonObject jsonObject = new JsonObject();
-
-				map.forEach((childKey, v) -> {
-					JsonUtils.addNestedProperty(jsonObject, childKey, JsonParser.parseString(v), "\\.");
-				});
-
 				String rawJson = map.get(field.key().toString());
-				JsonElement parsed = new JsonObject();
-				if (rawJson != null) {
-					parsed = JsonParser.parseString(rawJson);
-				}
+				if (rawJson == null) {
+					value = field.function().apply(null);
+				} else {
+					JsonObject jsonObject = new JsonObject();
 
-				value = field.function().apply(field.codec().decode(parsed));
+					map.forEach((childKey, v) -> {
+						JsonUtils.addNestedProperty(jsonObject, childKey, JsonParser.parseString(v), "\\.");
+					});
+
+					JsonElement parsed = JsonParser.parseString(rawJson);
+					value = field.function().apply(field.codec().decode(parsed));
+				}
 			}
 
 			JsonElement jsonElement = field.codec().encode(value);
@@ -149,7 +150,6 @@ public class RedisCollection implements MercuryCollection {
 
 			jedis.hset(stringKey, field.key().toString(), jsonElement.toString());
 		} catch (Exception e) {
-			e.printStackTrace();
 			LOGGER.error("Exception occurred while updating field redis collection", e);
 			throw e;
 		} finally {
