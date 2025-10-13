@@ -17,11 +17,13 @@ public class StructCodec {
 	) {
 		E field = getter.apply(value);
 
-		if (field == null) {
-			throw new NullPointerException("Trying to encode '%s' field with null value".formatted(name));
-		}
+		JsonElement encoded = codec.encode(field);
 
-		json.add(name, codec.encode(field));
+		json.add(name, encoded);
+	}
+
+	private static <T> void requireNotNull(T value) {
+		if (value == null) throw new NullPointerException("Unable to encode field with null value");
 	}
 
 	public static <T, P1> Codec<T> struct(
@@ -31,6 +33,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				return json;
@@ -54,6 +57,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -80,6 +84,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -109,6 +114,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -141,6 +147,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -176,6 +183,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -214,6 +222,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -255,6 +264,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -299,6 +309,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -347,6 +358,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -397,6 +409,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -450,6 +463,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -506,6 +520,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -565,6 +580,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -627,6 +643,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -692,6 +709,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -760,6 +778,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -831,6 +850,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -905,6 +925,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
@@ -982,6 +1003,7 @@ public class StructCodec {
 		return new Codec<T>() {
 			@Override
 			public JsonElement encode(T value) {
+				requireNotNull(value);
 				JsonObject json = new JsonObject();
 				addToJson(json, name1, codec1, getter1, value);
 				addToJson(json, name2, codec2, getter2, value);
