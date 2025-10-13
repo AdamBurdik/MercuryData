@@ -131,7 +131,7 @@ public class CodecImpl {
 	record OptionalCodec<T>(@NotNull Codec<T> inner, @Nullable T defaultValue) implements Codec<T> {
 		@Override
 		public JsonElement encode(T value) {
-			if (value == null || Objects.equals(value, defaultValue)) {
+			if (value == null) {
 				return JsonNull.INSTANCE;
 			}
 			return inner.encode(value);

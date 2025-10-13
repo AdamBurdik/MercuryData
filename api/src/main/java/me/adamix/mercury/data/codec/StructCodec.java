@@ -2,10 +2,28 @@ package me.adamix.mercury.data.codec;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
 public class StructCodec {
+	private static <T, E> void addToJson(
+			@NotNull JsonObject json,
+			@NotNull String name,
+			@NotNull Codec<E> codec,
+			Function<T, E> getter,
+			@NotNull T value
+	) {
+		E field = getter.apply(value);
+
+		if (field == null) {
+			throw new NullPointerException("Trying to encode '%s' field with null value".formatted(name));
+		}
+
+		json.add(name, codec.encode(field));
+	}
+
 	public static <T, P1> Codec<T> struct(
 			String name1, Codec<P1> codec1, Function<T, P1> getter1,
 			Functions.F1<P1, T> constructor
@@ -14,7 +32,7 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
 				return json;
 			}
 
@@ -37,8 +55,8 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
 				return json;
 			}
 
@@ -63,9 +81,9 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
 				return json;
 			}
 
@@ -92,10 +110,10 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
 				return json;
 			}
 
@@ -124,11 +142,11 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
 				return json;
 			}
 
@@ -159,12 +177,12 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
 				return json;
 			}
 
@@ -197,13 +215,13 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
 				return json;
 			}
 
@@ -238,14 +256,14 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
 				return json;
 			}
 
@@ -282,14 +300,15 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
 				json.add(name9, codec9.encode(getter9.apply(value)));
 				return json;
 			}
@@ -329,16 +348,16 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
 				return json;
 			}
 
@@ -379,17 +398,17 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
 				return json;
 			}
 
@@ -432,18 +451,18 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
 				return json;
 			}
 
@@ -488,19 +507,19 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
-				json.add(name13, codec13.encode(getter13.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
+				addToJson(json, name13, codec13, getter13, value);
 				return json;
 			}
 
@@ -547,20 +566,20 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
-				json.add(name13, codec13.encode(getter13.apply(value)));
-				json.add(name14, codec14.encode(getter14.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
+				addToJson(json, name13, codec13, getter13, value);
+				addToJson(json, name14, codec14, getter14, value);
 				return json;
 			}
 
@@ -609,21 +628,21 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
-				json.add(name13, codec13.encode(getter13.apply(value)));
-				json.add(name14, codec14.encode(getter14.apply(value)));
-				json.add(name15, codec15.encode(getter15.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
+				addToJson(json, name13, codec13, getter13, value);
+				addToJson(json, name14, codec14, getter14, value);
+				addToJson(json, name15, codec15, getter15, value);
 				return json;
 			}
 
@@ -674,22 +693,22 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
-				json.add(name13, codec13.encode(getter13.apply(value)));
-				json.add(name14, codec14.encode(getter14.apply(value)));
-				json.add(name15, codec15.encode(getter15.apply(value)));
-				json.add(name16, codec16.encode(getter16.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
+				addToJson(json, name13, codec13, getter13, value);
+				addToJson(json, name14, codec14, getter14, value);
+				addToJson(json, name15, codec15, getter15, value);
+				addToJson(json, name16, codec16, getter16, value);
 				return json;
 			}
 
@@ -742,23 +761,23 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
-				json.add(name13, codec13.encode(getter13.apply(value)));
-				json.add(name14, codec14.encode(getter14.apply(value)));
-				json.add(name15, codec15.encode(getter15.apply(value)));
-				json.add(name16, codec16.encode(getter16.apply(value)));
-				json.add(name17, codec17.encode(getter17.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
+				addToJson(json, name13, codec13, getter13, value);
+				addToJson(json, name14, codec14, getter14, value);
+				addToJson(json, name15, codec15, getter15, value);
+				addToJson(json, name16, codec16, getter16, value);
+				addToJson(json, name17, codec17, getter17, value);
 				return json;
 			}
 
@@ -813,24 +832,24 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
-				json.add(name13, codec13.encode(getter13.apply(value)));
-				json.add(name14, codec14.encode(getter14.apply(value)));
-				json.add(name15, codec15.encode(getter15.apply(value)));
-				json.add(name16, codec16.encode(getter16.apply(value)));
-				json.add(name17, codec17.encode(getter17.apply(value)));
-				json.add(name18, codec18.encode(getter18.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
+				addToJson(json, name13, codec13, getter13, value);
+				addToJson(json, name14, codec14, getter14, value);
+				addToJson(json, name15, codec15, getter15, value);
+				addToJson(json, name16, codec16, getter16, value);
+				addToJson(json, name17, codec17, getter17, value);
+				addToJson(json, name18, codec18, getter18, value);
 				return json;
 			}
 
@@ -887,25 +906,25 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
-				json.add(name13, codec13.encode(getter13.apply(value)));
-				json.add(name14, codec14.encode(getter14.apply(value)));
-				json.add(name15, codec15.encode(getter15.apply(value)));
-				json.add(name16, codec16.encode(getter16.apply(value)));
-				json.add(name17, codec17.encode(getter17.apply(value)));
-				json.add(name18, codec18.encode(getter18.apply(value)));
-				json.add(name19, codec19.encode(getter19.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
+				addToJson(json, name13, codec13, getter13, value);
+				addToJson(json, name14, codec14, getter14, value);
+				addToJson(json, name15, codec15, getter15, value);
+				addToJson(json, name16, codec16, getter16, value);
+				addToJson(json, name17, codec17, getter17, value);
+				addToJson(json, name18, codec18, getter18, value);
+				addToJson(json, name19, codec19, getter19, value);
 				return json;
 			}
 
@@ -964,26 +983,26 @@ public class StructCodec {
 			@Override
 			public JsonElement encode(T value) {
 				JsonObject json = new JsonObject();
-				json.add(name1, codec1.encode(getter1.apply(value)));
-				json.add(name2, codec2.encode(getter2.apply(value)));
-				json.add(name3, codec3.encode(getter3.apply(value)));
-				json.add(name4, codec4.encode(getter4.apply(value)));
-				json.add(name5, codec5.encode(getter5.apply(value)));
-				json.add(name6, codec6.encode(getter6.apply(value)));
-				json.add(name7, codec7.encode(getter7.apply(value)));
-				json.add(name8, codec8.encode(getter8.apply(value)));
-				json.add(name9, codec9.encode(getter9.apply(value)));
-				json.add(name10, codec10.encode(getter10.apply(value)));
-				json.add(name11, codec11.encode(getter11.apply(value)));
-				json.add(name12, codec12.encode(getter12.apply(value)));
-				json.add(name13, codec13.encode(getter13.apply(value)));
-				json.add(name14, codec14.encode(getter14.apply(value)));
-				json.add(name15, codec15.encode(getter15.apply(value)));
-				json.add(name16, codec16.encode(getter16.apply(value)));
-				json.add(name17, codec17.encode(getter17.apply(value)));
-				json.add(name18, codec18.encode(getter18.apply(value)));
-				json.add(name19, codec19.encode(getter19.apply(value)));
-				json.add(name20, codec20.encode(getter20.apply(value)));
+				addToJson(json, name1, codec1, getter1, value);
+				addToJson(json, name2, codec2, getter2, value);
+				addToJson(json, name3, codec3, getter3, value);
+				addToJson(json, name4, codec4, getter4, value);
+				addToJson(json, name5, codec5, getter5, value);
+				addToJson(json, name6, codec6, getter6, value);
+				addToJson(json, name7, codec7, getter7, value);
+				addToJson(json, name8, codec8, getter8, value);
+				addToJson(json, name9, codec9, getter9, value);
+				addToJson(json, name10, codec10, getter10, value);
+				addToJson(json, name11, codec11, getter11, value);
+				addToJson(json, name12, codec12, getter12, value);
+				addToJson(json, name13, codec13, getter13, value);
+				addToJson(json, name14, codec14, getter14, value);
+				addToJson(json, name15, codec15, getter15, value);
+				addToJson(json, name16, codec16, getter16, value);
+				addToJson(json, name17, codec17, getter17, value);
+				addToJson(json, name18, codec18, getter18, value);
+				addToJson(json, name19, codec19, getter19, value);
+				addToJson(json, name20, codec20, getter20, value);
 				return json;
 			}
 
