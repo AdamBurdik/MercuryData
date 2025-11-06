@@ -70,9 +70,9 @@ public class RedisCollectionTest {
 				"adamix",
 				42,
 				123456789L,
-				List.of("alpha", "beta", "gamma"),
+				List.of("item1", "item2"),
 				Map.of("key1", "value1", "key2", "value2"),
-				Set.of(10L, 20L, 30L)
+				Set.of(20L)
 		);
 	}
 
@@ -87,6 +87,20 @@ public class RedisCollectionTest {
 	}
 
 	@Test
+	void testSetAndGetField() {
+		TestData data = createData();
+		collection.setSync(Key.of("first_value"), TestData.CODEC, data);
+
+		Optional<String> nameField = collection.getSync(Key.of("first_value", "name"), Codec.STRING);
+		assertTrue(nameField.isPresent());
+		assertEquals(data.name(), nameField.get());
+
+		Optional<Integer> intNumberField = collection.getSync(Key.of("first_value", "int_number"), Codec.INT);
+		assertTrue(intNumberField.isPresent());
+		assertEquals(data.intNumber(), intNumberField.get());
+	}
+
+	@Test
 	void testUpdateField() {
 		TestData data = createData();
 		collection.setSync(Key.of("first_value"), TestData.CODEC, data);
@@ -96,9 +110,31 @@ public class RedisCollectionTest {
 				true);
 
 		Optional<TestData> fetched = collection.getSync(Key.of("first_value"), TestData.CODEC);
+		System.out.println("d: " + fetched);
 		assertTrue(fetched.isPresent());
 		assertEquals("Hello, World", fetched.get().name());
 		assertEquals(data.intNumber(), fetched.get().intNumber());
+	}
+
+	@Test
+	void testUpdateMapField() {
+		TestData data = createData();
+		collection.setSync(Key.of("first_value"), TestData.CODEC, data);
+
+		collection.updateFieldSync(
+				Key.of("first_value"),
+				UpdateField.of(
+						Key.of("map"),
+						Codec.STRING.map(Codec.STRING),
+						(Function<Map<String, String>, Map<String, String>>) map -> {
+							map.put("key420", "value69");
+							return map;
+						}
+				)
+		);
+
+		Optional<Map<String, String>> fetched = collection.getSync(Key.of("first_value", "map"), Codec.STRING.map(Codec.STRING));
+		assertEquals("value69", fetched.get().get("key420"));
 	}
 
 	@Test
