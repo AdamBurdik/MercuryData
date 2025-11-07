@@ -62,6 +62,12 @@ public class Key {
 		return new Key(newParts);
 	}
 
+	public Key addKey(@NotNull Key key) {
+		List<KeyPart> newParts = new ArrayList<>(parts);
+		newParts.addAll(key.parts);
+		return new Key(newParts);
+	}
+
 	public List<KeyPart> getParts() {
 		return parts;
 	}
@@ -81,9 +87,13 @@ public class Key {
 	@Override
 	public String toString() {
 		if (parts.isEmpty()) return "";
-		StringBuilder sb = new StringBuilder(parts.get(0).getValue());
-		for (int i = 1; i < parts.size(); i++) {
-			sb.append(parts.get(i).getSeparator());
+
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < parts.size(); i++) {
+			if (i > 0) {
+				// Use the separator stored WITH the current part (it represents what comes before it)
+				sb.append(parts.get(i).getSeparator());
+			}
 			sb.append(parts.get(i).getValue());
 		}
 		return sb.toString();
@@ -117,23 +127,36 @@ public class Key {
 		}
 
 		List<KeyPart> parts = new ArrayList<>();
-		parts.add(new KeyPart(string, '.')); // start with whole string
+		String remaining = string;
+		char previousSeparator = '.'; // Default for first part
 
-		for (String regex : regexes) {
-			List<KeyPart> newParts = new ArrayList<>();
-			for (KeyPart part : parts) {
-				// split only if part contains the separator
-				if (part.getValue().contains(regex.replaceAll("\\\\", ""))) {
-					String[] split = part.getValue().split(regex);
-					for (int i = 0; i < split.length; i++) {
-						char sep = (i < split.length - 1) ? regex.charAt(regex.length() - 1) : '.'; // guess separator
-						newParts.add(new KeyPart(split[i], sep));
-					}
-				} else {
-					newParts.add(part);
+		while (!remaining.isEmpty()) {
+			int earliestIndex = -1;
+			char foundSeparator = '.';
+
+			// Find the earliest separator in the remaining string
+			for (String regex : regexes) {
+				// Extract the actual separator character from the regex (e.g., "\\." -> '.')
+				char separator = regex.replace("\\", "").charAt(0);
+				int index = remaining.indexOf(separator);
+
+				if (index != -1 && (earliestIndex == -1 || index < earliestIndex)) {
+					earliestIndex = index;
+					foundSeparator = separator;
 				}
 			}
-			parts = newParts;
+
+			if (earliestIndex == -1) {
+				// No more separators, add the rest as final part
+				parts.add(new KeyPart(remaining, previousSeparator));
+				break;
+			} else {
+				// Add part before separator
+				String value = remaining.substring(0, earliestIndex);
+				parts.add(new KeyPart(value, previousSeparator));
+				previousSeparator = foundSeparator; // Store for next part
+				remaining = remaining.substring(earliestIndex + 1);
+			}
 		}
 
 		return new Key(parts);
