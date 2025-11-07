@@ -209,7 +209,7 @@ public class RedisCollection implements MercuryCollection {
 				cursor = scan.getCursor();
 			} while (!cursor.equals("0"));
 		} catch (Exception e) {
-			LOGGER.error("Exception occurred while checking if an entity exists in redis collection", e);
+			LOGGER.error("Exception occurred while clearing an redis collection", e);
 			throw e;
 		} finally {
 			lock.unlock();
