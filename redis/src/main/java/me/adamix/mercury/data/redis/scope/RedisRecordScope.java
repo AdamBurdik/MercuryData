@@ -133,7 +133,7 @@ public class RedisRecordScope implements RecordScope {
 			return Optional.of(element);
 
 		} catch (Exception e) {
-			LOGGER.error("Exception occurred while reading an entity from redis collection", e);
+			LOGGER.error("Exception occurred while reading an field from redis collection", e);
 			throw e;
 		} finally {
 			lock.unlock();
@@ -141,12 +141,38 @@ public class RedisRecordScope implements RecordScope {
 	}
 
 	@Override
-	public @NotNull RecordScope removeFieldJsonSync(@NotNull String key) {
+	public @NotNull RecordScope removeFieldJsonSync(@NotNull Key key) {
+		LOGGER.debug("Redis remove field operation - key: {}", key);
+		lock.lock();
+		try (Jedis jedis = jedisPool.getResource()) {
+
+			Map<String, String> map = jedis.hgetAll(fullKey.withCollectionName(collectionName));
+			if (map == null) {
+				return this;
+			}
+
+			JsonObject jsonObject = new JsonObject();
+
+			String base = key.toString();
+
+			for (String childKey : map.keySet()) {
+				if (childKey.equals(base) || childKey.startsWith(base)) {
+					jedis.hdel(fullKey.withCollectionName(collectionName), childKey);
+				}
+			}
+
+
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while removing an field from redis collection", e);
+			throw e;
+		} finally {
+			lock.unlock();
+		}
 		return this;
 	}
 
 	@Override
-	public boolean fieldJsonExistsSync(@NotNull String key) {
+	public boolean fieldJsonExistsSync(@NotNull Key key) {
 		return false;
 	}
 
@@ -156,7 +182,7 @@ public class RedisRecordScope implements RecordScope {
 	}
 
 	@Override
-	public @NotNull Collection<String> listFieldsSync() {
+	public @NotNull Collection<Key> listFieldsSync() {
 		return List.of();
 	}
 }
