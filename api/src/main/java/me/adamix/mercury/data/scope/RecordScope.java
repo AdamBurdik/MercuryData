@@ -26,14 +26,14 @@ public interface RecordScope {
 
 	// REMOVE FIELD JSON
 	@NotNull
-	RecordScope removeFieldJsonSync(@NotNull String key);
-	default @NotNull CompletableFuture<@NotNull RecordScope> removeFieldJson(@NotNull String key) {
+	RecordScope removeFieldJsonSync(@NotNull Key key);
+	default @NotNull CompletableFuture<@NotNull RecordScope> removeFieldJson(@NotNull Key key) {
 		return CompletableFuture.supplyAsync(() -> removeFieldJsonSync(key));
 	}
 
 	// CHECK IF FIELD JSON EXISTS
-	boolean fieldJsonExistsSync(@NotNull String key);
-	default @NotNull CompletableFuture<Boolean> fieldJsonExists(@NotNull String key) {
+	boolean fieldJsonExistsSync(@NotNull Key key);
+	default @NotNull CompletableFuture<Boolean> fieldJsonExists(@NotNull Key key) {
 		return CompletableFuture.supplyAsync(() -> fieldJsonExistsSync(key));
 	}
 
@@ -45,8 +45,8 @@ public interface RecordScope {
 
 	// LIST FIELD JSON KEYS
 	@NotNull
-	Collection<String> listFieldsSync();
-	default @NotNull CompletableFuture<@NotNull Collection<String>> listFields() {
+	Collection<Key> listFieldsSync();
+	default @NotNull CompletableFuture<@NotNull Collection<Key>> listFields() {
 		return CompletableFuture.supplyAsync(this::listFieldsSync);
 	}
 }
