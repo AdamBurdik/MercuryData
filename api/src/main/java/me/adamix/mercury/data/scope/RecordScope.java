@@ -10,31 +10,31 @@ import java.util.concurrent.CompletableFuture;
 
 public interface RecordScope {
 
-	// SET FIELD
+	// SET FIELD JSON
 	@NotNull
-	RecordScope setFieldSync(@NotNull Key key, @NotNull JsonElement value);
-	default @NotNull CompletableFuture<@NotNull RecordScope> setField(@NotNull Key key, @NotNull JsonElement value) {
-		return CompletableFuture.supplyAsync(() -> setFieldSync(key, value));
+	RecordScope setFieldJsonSync(@NotNull Key key, @NotNull JsonElement value);
+	default @NotNull CompletableFuture<@NotNull RecordScope> setFieldJson(@NotNull Key key, @NotNull JsonElement value) {
+		return CompletableFuture.supplyAsync(() -> setFieldJsonSync(key, value));
 	}
 
-	// GET FIELD
+	// GET FIELD JSON
 	@NotNull
-	Optional<JsonElement> getFieldSync(@NotNull Key key);
-	default @NotNull CompletableFuture<Optional<JsonElement>> getField(@NotNull Key key) {
-		return CompletableFuture.supplyAsync(() -> getFieldSync(key));
+	Optional<JsonElement> getFieldJsonSync(@NotNull Key key);
+	default @NotNull CompletableFuture<Optional<JsonElement>> getFieldJson(@NotNull Key key) {
+		return CompletableFuture.supplyAsync(() -> getFieldJsonSync(key));
 	}
 
-	// REMOVE FIELD
+	// REMOVE FIELD JSON
 	@NotNull
-	RecordScope removeFieldSync(@NotNull String key);
-	default @NotNull CompletableFuture<@NotNull RecordScope> removeField(@NotNull String key) {
-		return CompletableFuture.supplyAsync(() -> removeFieldSync(key));
+	RecordScope removeFieldJsonSync(@NotNull String key);
+	default @NotNull CompletableFuture<@NotNull RecordScope> removeFieldJson(@NotNull String key) {
+		return CompletableFuture.supplyAsync(() -> removeFieldJsonSync(key));
 	}
 
-	// CHECK IF FIELD EXISTS
-	boolean fieldExistsSync(@NotNull String key);
-	default @NotNull CompletableFuture<Boolean> fieldExists(@NotNull String key) {
-		return CompletableFuture.supplyAsync(() -> fieldExistsSync(key));
+	// CHECK IF FIELD JSON EXISTS
+	boolean fieldJsonExistsSync(@NotNull String key);
+	default @NotNull CompletableFuture<Boolean> fieldJsonExists(@NotNull String key) {
+		return CompletableFuture.supplyAsync(() -> fieldJsonExistsSync(key));
 	}
 
 	// CLEAR RECORD
@@ -43,7 +43,7 @@ public interface RecordScope {
 		return CompletableFuture.supplyAsync(this::clearSync);
 	}
 
-	// LIST FIELDS
+	// LIST FIELD JSON KEYS
 	@NotNull
 	Collection<String> listFieldsSync();
 	default @NotNull CompletableFuture<@NotNull Collection<String>> listFields() {
