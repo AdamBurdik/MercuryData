@@ -14,10 +14,13 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.params.ScanParams;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class RedisRecordScope implements RecordScope {
@@ -224,7 +227,40 @@ public class RedisRecordScope implements RecordScope {
 	}
 
 	@Override
-	public @NotNull Collection<Key> listFieldsSync(boolean recursive) {
-		return List.of();
+	public @NotNull Collection<String> listFieldsSync(boolean recursive) {
+		Set<String> set = new HashSet<>();
+
+		LOGGER.debug("Redis list field keys operation");
+		lock.lock();
+		try  (Jedis jedis = jedisPool.getResource()) {
+			Map<String, String> map = jedis.hgetAll(fullKey.withCollectionName(collectionName));
+			if (map == null) {
+				return set;
+			}
+
+			for (String childKey : map.keySet()) {
+				Key key = Key.parse(childKey, "\\.", "\\:");
+				if (recursive) {
+					for (Key.KeyPart part : key.getParts()) {
+
+						// We ignore indices of lists, because we care just about keys (I hope so)
+						if (part.getSeparator() != ':') {
+							set.add(part.getValue());
+						}
+					}
+				} else {
+					set.add(key.getParts().getFirst().getValue());
+				}
+			}
+
+
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while getting field keys from redis collection", e);
+			throw e;
+		} finally {
+			lock.unlock();
+		}
+
+		return set;
 	}
 }
