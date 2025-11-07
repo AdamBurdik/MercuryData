@@ -45,8 +45,8 @@ public interface RecordScope {
 
 	// LIST FIELD JSON KEYS
 	@NotNull
-	Collection<Key> listFieldsSync();
-	default @NotNull CompletableFuture<@NotNull Collection<Key>> listFields() {
-		return CompletableFuture.supplyAsync(this::listFieldsSync);
+	Collection<Key> listFieldsSync(boolean recursive);
+	default @NotNull CompletableFuture<@NotNull Collection<Key>> listFields(boolean recursive) {
+		return CompletableFuture.supplyAsync(()  -> listFieldsSync(recursive));
 	}
 }

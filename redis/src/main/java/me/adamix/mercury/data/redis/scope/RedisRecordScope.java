@@ -224,7 +224,7 @@ public class RedisRecordScope implements RecordScope {
 	}
 
 	@Override
-	public @NotNull Collection<Key> listFieldsSync() {
+	public @NotNull Collection<Key> listFieldsSync(boolean recursive) {
 		return List.of();
 	}
 }
