@@ -142,7 +142,7 @@ public class RedisCollection implements MercuryCollection {
 
 
 	@Override
-	public @NotNull MercuryCollection removeJsonSync(@NotNull Key key) {
+	public @NotNull MercuryCollection removeSync(@NotNull Key key) {
 		LOGGER.debug("Redis remove operation - key: {}", key);
 		lock.lock();
 		try  (Jedis jedis = jedisPool.getResource()) {
@@ -177,7 +177,7 @@ public class RedisCollection implements MercuryCollection {
 	}
 
 	@Override
-	public boolean jsonExistsSync(@NotNull Key key) {
+	public boolean existsSync(@NotNull Key key) {
 		LOGGER.debug("Redis exists operation - key: {}", key);
 		lock.lock();
 		try  (Jedis jedis = jedisPool.getResource()) {
