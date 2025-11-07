@@ -24,15 +24,18 @@ public class RedisStoreModule implements StoreModule {
 	}
 
 	public void ping() {
-		try (Jedis jedis = pool.getResource()) {
-			String response = jedis.ping();
-			if ("PONG".equals(response)) {
-				LOGGER.info("Redis has been connected");
-			} else {
-				LOGGER.error("Unexpected Redis ping response: {}", response);
+		try {
+			try (Jedis jedis = pool.getResource()) {
+				String response = jedis.ping();
+				if ("PONG".equals(response)) {
+					LOGGER.info("Redis has been connected");
+				} else {
+					LOGGER.error("Unexpected Redis ping response: {}", response);
+				}
 			}
 		} catch (Exception e) {
 			LOGGER.error("Failed to connect to Redis", e);
+			throw new RuntimeException(e);
 		}
 	}
 
