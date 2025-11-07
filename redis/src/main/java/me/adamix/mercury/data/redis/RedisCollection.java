@@ -218,7 +218,7 @@ public class RedisCollection implements MercuryCollection {
 	}
 
 	@Override
-	public @NotNull RecordScope record(@NotNull String key) {
+	public @NotNull RecordScope record(@NotNull Key key) {
 		throw new IllegalStateException("Record is not implemented yet");
 	}
 }

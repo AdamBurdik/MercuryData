@@ -47,6 +47,6 @@ public interface MercuryCollection {
 
 	// RECORD SCOPE
 	@NotNull
-	RecordScope record(@NotNull String key);
+	RecordScope record(@NotNull Key key);
 
 }
