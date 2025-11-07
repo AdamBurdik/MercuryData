@@ -1,6 +1,7 @@
 package me.adamix.mercury.data.scope;
 
 import com.google.gson.JsonElement;
+import me.adamix.mercury.data.key.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -11,15 +12,15 @@ public interface RecordScope {
 
 	// SET FIELD
 	@NotNull
-	RecordScope setFieldSync(@NotNull String key, @NotNull JsonElement value);
-	default @NotNull CompletableFuture<@NotNull RecordScope> setField(@NotNull String key, @NotNull JsonElement value) {
+	RecordScope setFieldSync(@NotNull Key key, @NotNull JsonElement value);
+	default @NotNull CompletableFuture<@NotNull RecordScope> setField(@NotNull Key key, @NotNull JsonElement value) {
 		return CompletableFuture.supplyAsync(() -> setFieldSync(key, value));
 	}
 
 	// GET FIELD
 	@NotNull
-	Optional<JsonElement> getFieldSync(@NotNull String key);
-	default @NotNull CompletableFuture<Optional<JsonElement>> getField(@NotNull String key) {
+	Optional<JsonElement> getFieldSync(@NotNull Key key);
+	default @NotNull CompletableFuture<Optional<JsonElement>> getField(@NotNull Key key) {
 		return CompletableFuture.supplyAsync(() -> getFieldSync(key));
 	}
 
