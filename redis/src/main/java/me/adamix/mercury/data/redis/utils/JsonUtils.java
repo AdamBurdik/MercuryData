@@ -57,10 +57,6 @@ public class JsonUtils {
 		return current.getAsJsonObject();
 	}
 
-	// Converts string to complex object
- 	//
- 	// Example:
-	//     people:0.address.lines:0 -> {"people":[{"address":{"lines":["Prague 5"]}}]}
 	public static void createNestedObject(
 			@NotNull JsonObject obj,
 			@NotNull String dottedKey,
@@ -73,75 +69,66 @@ public class JsonUtils {
 			Key.KeyPart part = key.getParts().get(i);
 			boolean isLast = (i == key.getParts().size() - 1);
 
-			if (part.getSeparator() == '.') {
-				if (current.isJsonObject()) {
-					JsonObject currentObject = current.getAsJsonObject();
-					if (isLast) {
-						currentObject.add(part.getValue(), value);
-						continue;
-					}
-
-					if (!currentObject.has(part.getValue()) || !currentObject.get(part.getValue()).isJsonObject()) {
-						currentObject.add(part.getValue(), new JsonObject());
-					}
-					current = currentObject.getAsJsonObject(part.getValue());
-				}
-				else if (current.isJsonArray()) {
-					int index = Integer.parseInt(part.getValue());
-					JsonArray currentArray = current.getAsJsonArray();
-
-					// Fill array with nulls, so we can put our desired value at specific index
-					while (index >= currentArray.size()) {
-						currentArray.add(JsonNull.INSTANCE);
-					}
-					if (isLast) {
-						currentArray.set(index, value);
-						current = currentArray.get(index);
-					} else {
-						//  tags:0.name
-						//  : 0
-						JsonElement child = currentArray.get(index);
-						if (child.isJsonObject()) {
-							current = child.getAsJsonObject();
-						} else if (child.isJsonNull()) {
-							currentArray.set(index, new JsonObject());
-							current = currentArray.get(index).getAsJsonObject();
-						}
-
-//						current = currentArray.get(index);
-//						if (current ==  null || current.isJsonObject()) {
-//							currentArray.set(index, new JsonObject());
-//							current = currentArray.get(index);
-//						}
-					}
-				}
-			} else if (part.getSeparator() == ':') {
-				if (isLast) {
-					if (current.isJsonObject()) {
-						current.getAsJsonObject().add(part.getValue(), value);
-					} else if (current.isJsonArray()) {
-						current.getAsJsonArray().set(Integer.parseInt(part.getValue()), value);
-					}
-				} else if (current.isJsonObject()) {
-					JsonObject currentObject = current.getAsJsonObject();
-					if (!currentObject.has(part.getValue()) || !currentObject.get(part.getValue()).isJsonArray()) {
-						currentObject.add(part.getValue(), new JsonArray());
-					}
-					current = currentObject.get(part.getValue()).getAsJsonArray();
-				} else if (current.isJsonArray()) {
-					int index = Integer.parseInt(part.getValue());
-					JsonArray currentArray = current.getAsJsonArray();
-
-					// Fill array with nulls, so we can put our desired value at specific index
-					while (index >= currentArray.size()) {
-						currentArray.add(JsonNull.INSTANCE);
-					}
-
-					currentArray.set(index, new JsonArray());
-					current = currentArray.get(index);
-				}
+			if (isLast) {
+				setValueAtPart(current, part.getValue(), value);
+			} else {
+				Key.KeyPart next = key.getParts().get(i + 1);
+				boolean nextIsArray = (next.getSeparator() == ':');
+				current = ensureAndNavigate(current, part.getValue(), nextIsArray);
 			}
 		}
 	}
 
+	private static void setValueAtPart(JsonElement current, String partValue, JsonElement value) {
+		if (current.isJsonObject()) {
+			current.getAsJsonObject().add(partValue, value);
+		} else if (current.isJsonArray()) {
+			JsonArray array = current.getAsJsonArray();
+			int index = Integer.parseInt(partValue);
+			ensureArraySize(array, index + 1);
+			array.set(index, value);
+		}
+	}
+
+	private static JsonElement ensureAndNavigate(JsonElement current, String partValue, boolean nextIsArray) {
+		if (current.isJsonObject()) {
+			return ensureAndNavigateFromObject(current.getAsJsonObject(), partValue, nextIsArray);
+		} else if (current.isJsonArray()) {
+			return ensureAndNavigateFromArray(current.getAsJsonArray(), partValue, nextIsArray);
+		}
+		return current;
+	}
+
+	private static JsonElement ensureAndNavigateFromObject(JsonObject obj, String key, boolean nextIsArray) {
+		JsonElement newElement = nextIsArray ? new JsonArray() : new JsonObject();
+
+		if (!obj.has(key) || !isCorrectType(obj.get(key), nextIsArray)) {
+			obj.add(key, newElement);
+		}
+
+		return obj.get(key);
+	}
+
+	private static JsonElement ensureAndNavigateFromArray(JsonArray array, String indexStr, boolean nextIsArray) {
+		int index = Integer.parseInt(indexStr);
+		ensureArraySize(array, index + 1);
+
+		JsonElement newElement = nextIsArray ? new JsonArray() : new JsonObject();
+
+		if (!isCorrectType(array.get(index), nextIsArray)) {
+			array.set(index, newElement);
+		}
+
+		return array.get(index);
+	}
+
+	private static void ensureArraySize(JsonArray array, int minSize) {
+		while (array.size() < minSize) {
+			array.add(JsonNull.INSTANCE);
+		}
+	}
+
+	private static boolean isCorrectType(JsonElement element, boolean shouldBeArray) {
+		return shouldBeArray ? element.isJsonArray() : element.isJsonObject();
+	}
 }
