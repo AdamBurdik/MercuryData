@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.adamix.mercury.data.MercuryCollection;
 import me.adamix.mercury.data.key.Key;
+import me.adamix.mercury.data.redis.scope.RedisRecordScope;
 import me.adamix.mercury.data.redis.utils.JsonUtils;
 import me.adamix.mercury.data.scope.RecordScope;
 import org.jetbrains.annotations.NotNull;
@@ -219,6 +220,6 @@ public class RedisCollection implements MercuryCollection {
 
 	@Override
 	public @NotNull RecordScope record(@NotNull Key key) {
-		throw new IllegalStateException("Record is not implemented yet");
+		return new RedisRecordScope(jedisPool, this.name, key);
 	}
 }
