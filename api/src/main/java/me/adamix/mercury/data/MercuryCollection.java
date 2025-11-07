@@ -1,42 +1,52 @@
 package me.adamix.mercury.data;
 
+
 import com.google.gson.JsonElement;
-import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
-import me.adamix.mercury.data.operation.update.UpdateField;
-import me.adamix.mercury.data.query.FindQueryBuilder;
+import me.adamix.mercury.data.scope.RecordScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public interface MercuryCollection {
-	@NotNull CompletableFuture<Void> set(@NotNull Key key, @NotNull JsonElement jsonElement);
-	void setSync(@NotNull Key key, @NotNull JsonElement jsonElement);
-	default <T> void setSync(@NotNull Key key, @NotNull Codec<T> codec, @NotNull T value) {
-		setSync(key, codec.encode(value));
+
+	// SET ENTITY
+	@NotNull
+	MercuryCollection setJsonSync(@NotNull Key key, @NotNull JsonElement value);
+	default @NotNull CompletableFuture<@NotNull MercuryCollection> setJson(@NotNull Key key, @NotNull JsonElement value) {
+		return CompletableFuture.supplyAsync(() -> setJsonSync(key, value));
 	}
 
-	@NotNull CompletableFuture<Optional<JsonElement>> get(@NotNull Key key);
-	@NotNull Optional<JsonElement> getSync(@NotNull Key key);
-	default <T> @NotNull Optional<T> getSync(@NotNull Key key, @NotNull Codec<T> codec) {
-		return getSync(key)
-				.filter(e -> !(e.isJsonObject() && e.getAsJsonObject().isEmpty()))
-				.map(codec::decode);
+	// GET ENTITY
+	@NotNull
+	Optional<JsonElement> getJsonSync(@NotNull Key key);
+	default @NotNull CompletableFuture<Optional<JsonElement>> getJson(@NotNull Key key) {
+		return CompletableFuture.supplyAsync(() -> getJsonSync(key));
 	}
 
-	<T> @NotNull CompletableFuture<Void> updateField(@NotNull Key key, @NotNull UpdateField<T> field, boolean insertIfAbsent);
-	default <T> @NotNull CompletableFuture<Void> updateField(@NotNull Key key, @NotNull UpdateField<T> field) {
-		return updateField(key, field, false);
+	// REMOVE ENTITY
+	@NotNull
+	MercuryCollection removeJsonSync(@NotNull Key key);
+	default @NotNull CompletableFuture<@NotNull MercuryCollection> removeJson(@NotNull Key key) {
+		return CompletableFuture.supplyAsync(() -> removeJsonSync(key));
 	}
 
-	<T> void updateFieldSync(@NotNull Key key, @NotNull UpdateField<T> field, boolean insertIfAbsent);
-	default <T> void updateFieldSync(@NotNull Key key, @NotNull UpdateField<T> field) {
-		updateFieldSync(key, field, false);
+	// CHECK IF ENTITY EXISTS
+	boolean jsonExistsSync(@NotNull Key key);
+	default @NotNull CompletableFuture<Boolean> jsonExists(@NotNull Key key) {
+		return CompletableFuture.supplyAsync(() -> jsonExistsSync(key));
 	}
 
-	@NotNull CompletableFuture<Boolean> remove(@NotNull Key key);
-	boolean removeSync(@NotNull Key key);
+	// CLEAR COLLECTION
+	@NotNull
+	MercuryCollection clearSync();
+	default @NotNull CompletableFuture<@NotNull MercuryCollection> clear() {
+		return CompletableFuture.supplyAsync(this::clearSync);
+	}
 
-	<T> @NotNull FindQueryBuilder<T> find(@NotNull Codec<T> codec);
+	// RECORD SCOPE
+	@NotNull
+	RecordScope record(@NotNull String key);
+
 }
