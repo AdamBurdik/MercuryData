@@ -320,7 +320,6 @@ public class StructCodec {
 				addToJson(json, name7, codec7, getter7, value);
 				addToJson(json, name8, codec8, getter8, value);
 				addToJson(json, name9, codec9, getter9, value);
-				json.add(name9, codec9.encode(getter9.apply(value)));
 				return json;
 			}
 
