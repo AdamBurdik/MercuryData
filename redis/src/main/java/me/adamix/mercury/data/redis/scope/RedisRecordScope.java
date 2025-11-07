@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.params.ScanParams;
 
 import java.util.Collection;
 import java.util.List;
@@ -133,7 +134,7 @@ public class RedisRecordScope implements RecordScope {
 			return Optional.of(element);
 
 		} catch (Exception e) {
-			LOGGER.error("Exception occurred while reading an field from redis collection", e);
+			LOGGER.error("Exception occurred while reading a field from redis collection", e);
 			throw e;
 		} finally {
 			lock.unlock();
@@ -163,7 +164,7 @@ public class RedisRecordScope implements RecordScope {
 
 
 		} catch (Exception e) {
-			LOGGER.error("Exception occurred while removing an field from redis collection", e);
+			LOGGER.error("Exception occurred while removing a field from redis collection", e);
 			throw e;
 		} finally {
 			lock.unlock();
@@ -173,11 +174,52 @@ public class RedisRecordScope implements RecordScope {
 
 	@Override
 	public boolean fieldJsonExistsSync(@NotNull Key key) {
+		LOGGER.debug("Redis check if field exists operation - key {} ({}.{})", key, collectionName, fullKey);
+		lock.lock();
+
+		try (Jedis jedis = jedisPool.getResource()) {
+			Map<String, String> map = jedis.hgetAll(fullKey.withCollectionName(collectionName));
+			if (map == null) {
+				return false;
+			}
+
+			String base = key.toString();
+
+			for (String childKey : map.keySet()) {
+				if (childKey.equals(base) || childKey.startsWith(base)) {
+					return true;
+				}
+			}
+
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while checking if field exists in redis collection", e);
+			throw e;
+		} finally {
+			lock.unlock();
+		}
 		return false;
 	}
 
 	@Override
 	public @NotNull RecordScope clearSync() {
+		LOGGER.debug("Redis clear field operation");
+		lock.lock();
+		try  (Jedis jedis = jedisPool.getResource()) {
+			String cursor = "0";
+			do {
+				var scan = jedis.scan(cursor, new ScanParams().match(fullKey.withCollectionName(collectionName) + "*"));
+				for (String key : scan.getResult()) {
+					jedis.del(key);
+				}
+				cursor = scan.getCursor();
+			} while (!cursor.equals("0"));
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while clearing a redis collection", e);
+			throw e;
+		} finally {
+			lock.unlock();
+		}
+
 		return this;
 	}
 
