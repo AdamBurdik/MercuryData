@@ -1,9 +1,6 @@
 package me.adamix.mercury.data.redis.scope;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.metadata.Metadata;
 import me.adamix.mercury.data.redis.utils.JsonUtils;
@@ -15,7 +12,9 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
@@ -135,12 +134,72 @@ public class RedisListScope implements ListScope {
 
 	@Override
 	public @NotNull Collection<JsonElement> getRangeJsonSync(int fromIndex, int toIndex) {
-		return List.of();
+		try {
+			return acquireLockAndJedisFunc(jedis -> {
+				int size = ListOperations.getSize(jedis, fieldKey, key, collectionName);
+				// Validate: fromIndex must be non-negative
+				if (fromIndex < 0) {
+					throw new IndexOutOfBoundsException(
+							"fromIndex must be >= 0, but was " + fromIndex +
+									" for list at key: " + key +
+									" in collection: " + collectionName
+					);
+				}
+
+				// Validate: fromIndex must not exceed toIndex
+				if (fromIndex > toIndex) {
+					throw new IndexOutOfBoundsException(
+							"fromIndex (" + fromIndex + ") must not exceed toIndex (" + toIndex + ")" +
+									" for list at key: " + key +
+									" in collection: " + collectionName
+					);
+				}
+
+				// Validate: toIndex must not exceed list size
+				if (toIndex > size) {
+					throw new IndexOutOfBoundsException(
+							"toIndex (" + toIndex + ") exceeds list size (" + size + ")" +
+									" at key: " + key +
+									" in collection: " + collectionName
+					);
+				}
+
+				// TODO Rewrite to use just just hgetall call
+				Collection<JsonElement> elements =  new ArrayList<>();
+				for (int i = fromIndex; i < toIndex; i++) {
+					elements.add(ListOperations.get(jedis, fieldKey, key, collectionName, i));
+				}
+
+				return elements;
+			});
+		} catch (IndexOutOfBoundsException e) {
+			throw e;
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while getting all element in range from a list in redis collection", e);
+		}
+
+		return Collections.emptyList();
 	}
 
 	@Override
 	public @NotNull Collection<JsonElement> getAllJsonSync() {
-		return List.of();
+		try {
+			return acquireLockAndJedisFunc(jedis -> {
+				int size = ListOperations.getSize(jedis, fieldKey, key, collectionName);
+
+				// TODO Rewrite to use just just hgetall call
+				Collection<JsonElement> elements =  new ArrayList<>();
+				for (int i = 0; i < size; i++) {
+					elements.add(ListOperations.get(jedis, fieldKey, key, collectionName, i));
+				}
+
+				return elements;
+			});
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while getting all element from a list in redis collection", e);
+		}
+
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -209,5 +268,10 @@ public class RedisListScope implements ListScope {
 	@Override
 	public @NotNull ListScope list(@NotNull Key resolve) {
 		return new RedisListScope(jedisPool, collectionName, fieldKey, key.addKey(resolve));
+	}
+
+	@Override
+	public @NotNull ListScope list(int index) {
+		return new RedisListScope(jedisPool, collectionName, fieldKey, key.addPart(String.valueOf(index), ':'));
 	}
 }

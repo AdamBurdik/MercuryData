@@ -266,4 +266,6 @@ public interface ListScope {
 
 	// LIST (Sub lists)
 	@NotNull ListScope list(@NotNull Key key);
+
+	@NotNull ListScope list(int index);
 }
