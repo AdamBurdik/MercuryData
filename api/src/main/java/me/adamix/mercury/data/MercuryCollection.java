@@ -4,6 +4,7 @@ package me.adamix.mercury.data;
 import com.google.gson.JsonElement;
 import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
+import me.adamix.mercury.data.query.FindQueryBuilder;
 import me.adamix.mercury.data.scope.RecordScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,4 +106,7 @@ public interface MercuryCollection {
 			return set(key, codec, value).thenApply(col -> value);
 		});
 	}
+
+	// FIND
+	<T> @NotNull FindQueryBuilder<T> find(@NotNull Codec<T> codec);
 }
