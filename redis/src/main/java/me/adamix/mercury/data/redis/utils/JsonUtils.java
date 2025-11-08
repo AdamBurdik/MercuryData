@@ -5,10 +5,22 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import me.adamix.mercury.data.key.Key;
+import me.adamix.mercury.data.metadata.Metadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import redis.clients.jedis.Jedis;
 
 public class JsonUtils {
+
+	public static String getRawValue(JsonElement element) {
+		return me.adamix.mercury.data.utils.JsonUtils.getRawValue(element);
+	}
+
+	public static @NotNull JsonElement parseString(@Nullable String input) {
+		return me.adamix.mercury.data.utils.JsonUtils.parseString(input);
+	}
+
+
 	public static void addNestedProperty(
 			@NotNull JsonObject obj,
 			@NotNull String dottedKey,
@@ -84,6 +96,9 @@ public class JsonUtils {
 			current.getAsJsonObject().add(partValue, value);
 		} else if (current.isJsonArray()) {
 			JsonArray array = current.getAsJsonArray();
+			if (Metadata.isMetadata(partValue)) {
+				return;
+			}
 			int index = Integer.parseInt(partValue);
 			ensureArraySize(array, index + 1);
 			array.set(index, value);
@@ -130,5 +145,66 @@ public class JsonUtils {
 
 	private static boolean isCorrectType(JsonElement element, boolean shouldBeArray) {
 		return shouldBeArray ? element.isJsonArray() : element.isJsonObject();
+	}
+
+	public static void hsetSync(
+			@NotNull Jedis jedis,
+			@NotNull Key key,
+			@NotNull Key childKey,
+			@NotNull JsonElement jsonElement,
+			@NotNull String collectionName
+	) {
+		if (jsonElement.isJsonObject()) {
+			hsetSync(jedis, key, childKey, jsonElement.getAsJsonObject(), collectionName);
+		} else if (jsonElement.isJsonArray()) {
+			hsetSync(jedis, key, childKey, jsonElement.getAsJsonArray(), collectionName);
+		} else {
+			jedis.hset(key.withCollectionName(collectionName), childKey.toString(), jsonElement.getAsString());
+		}
+	}
+
+	public static void hsetObjectSync(
+			@NotNull Jedis jedis,
+			@NotNull Key key,
+			@NotNull Key childKey,
+			@NotNull JsonObject jsonObject,
+			@NotNull String collectionName
+	) {
+		for (String elementKey : jsonObject.keySet()) {
+			JsonElement jsonElement = jsonObject.get(elementKey);
+
+			if (jsonElement.isJsonObject()) {
+				hsetObjectSync(jedis, key, childKey.addPart(elementKey), jsonElement.getAsJsonObject(), collectionName);
+			} else if (jsonElement.isJsonArray()) {
+				hsetSyncArray(jedis, key, childKey.addPart(elementKey, '.'), jsonElement.getAsJsonArray(), collectionName);
+			} else {
+				jedis.hset(key.withCollectionName(collectionName), childKey.addPart(elementKey).toString(), jsonElement.toString());
+			}
+		}
+	}
+
+	public static void hsetSyncArray(
+			@NotNull Jedis jedis,
+			@NotNull Key key,
+			@NotNull Key childKey,
+			@NotNull JsonArray array,
+			@NotNull String collectionName
+	) {
+		int index = 0;
+		for (JsonElement element : array.asList()) {
+
+			Key indexedKey = childKey.addPart(String.valueOf(index), ':');
+
+			if (element.isJsonPrimitive()) {
+				jedis.hset(key.withCollectionName(collectionName), indexedKey.toString(), element.getAsString());
+			} else if (element.isJsonObject()) {
+				hsetObjectSync(jedis, key, indexedKey, element.getAsJsonObject(), collectionName);
+			} else if (element.isJsonArray()) {
+				hsetSyncArray(jedis, key, indexedKey, element.getAsJsonArray(), collectionName);
+			}
+
+			index++;
+		}
+		jedis.hset(key.withCollectionName(collectionName), childKey.addPart("__length__", ':').toString(), String.valueOf(array.size()));
 	}
 }

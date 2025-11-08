@@ -1,11 +1,12 @@
 package me.adamix.mercury.data.redis.scope;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.redis.utils.JsonUtils;
+import me.adamix.mercury.data.scope.ListScope;
 import me.adamix.mercury.data.scope.RecordScope;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -14,10 +15,8 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.params.ScanParams;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -48,7 +47,7 @@ public class RedisRecordScope implements RecordScope {
 			if (value.isJsonPrimitive()) {
 				jedis.hset(fullKey.withCollectionName(collectionName), key.toString(), value.getAsString());
 			} else if (value.isJsonObject()) {
-				hsetSync(jedis, key, Key.empty(), value.getAsJsonObject());
+				JsonUtils.hsetObjectSync(jedis, fullKey, key, value.getAsJsonObject(), collectionName);
 			} else if (value.isJsonArray()) {
 				// Ideal would be to fix this.
 				throw new IllegalArgumentException("Cannot store array at root. A key is required before any index");
@@ -63,38 +62,6 @@ public class RedisRecordScope implements RecordScope {
 		}
 
 		return this;
-	}
-
-	private void hsetSync(@NotNull Jedis jedis, @NotNull Key key, @NotNull Key childKey, @NotNull JsonObject jsonObject) {
-		for (String elementKey : jsonObject.keySet()) {
-			JsonElement jsonElement = jsonObject.get(elementKey);
-
-			if (jsonElement.isJsonObject()) {
-				hsetSync(jedis, key, childKey.addPart(elementKey), jsonElement.getAsJsonObject());
-			} else if (jsonElement.isJsonArray()) {
-				hsetSyncArray(jedis, key, childKey.addPart(elementKey, '.'), jsonElement.getAsJsonArray());
-			} else {
-				jedis.hset(key.withCollectionName(collectionName), childKey.addPart(elementKey).toString(), jsonElement.toString());
-			}
-		}
-	}
-
-	private void hsetSyncArray(@NotNull Jedis jedis, @NotNull Key key, @NotNull Key childKey, @NotNull JsonArray array) {
-		int index = 0;
-		for (JsonElement element : array.asList()) {
-
-			Key indexedKey = childKey.addPart(String.valueOf(index), ':');
-
-			if (element.isJsonPrimitive()) {
-				jedis.hset(key.withCollectionName(collectionName), indexedKey.toString(), element.getAsString());
-			} else if (element.isJsonObject()) {
-				hsetSync(jedis, key, indexedKey, element.getAsJsonObject());
-			} else if (element.isJsonArray()) {
-				hsetSyncArray(jedis, key, indexedKey, element.getAsJsonArray());
-			}
-
-			index++;
-		}
 	}
 
 	@Override
@@ -118,7 +85,7 @@ public class RedisRecordScope implements RecordScope {
 					return Optional.ofNullable(JsonParser.parseString(value));
 				}
 				if (childKey.startsWith(base)) {
-					JsonUtils.createNestedObject(jsonObject, childKey, JsonParser.parseString(value));
+					JsonUtils.createNestedObject(jsonObject, childKey, me.adamix.mercury.data.utils.JsonUtils.parseString(value));
 				}
 			}
 
@@ -262,5 +229,10 @@ public class RedisRecordScope implements RecordScope {
 		}
 
 		return set;
+	}
+
+	@Override
+	public @NotNull ListScope list(@NotNull Key key) {
+		return new RedisListScope(jedisPool, collectionName, fullKey, key);
 	}
 }

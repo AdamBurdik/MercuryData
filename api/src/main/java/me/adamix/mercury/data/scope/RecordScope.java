@@ -59,6 +59,7 @@ public interface RecordScope {
 
 	// UPDATE FIELD IF PRESENT
 	default <T> @NotNull RecordScope updateFieldIfPresentSync(@NotNull Key key, @NotNull Codec<T> codec, @NotNull UnaryOperator<T> updater) {
+		// ToDO Remake with native implementation
 		Optional<T> current = getFieldSync(key, codec);
 		if (current.isPresent()) {
 			T updated = updater.apply(current.get());
@@ -68,6 +69,7 @@ public interface RecordScope {
 	}
 
 	default <T> @NotNull CompletableFuture<@NotNull RecordScope> updateFieldIfPresent(@NotNull Key key, @NotNull Codec<T> codec, @NotNull UnaryOperator<T> updater) {
+		// ToDO Remake with native implementation
 		return getField(key, codec).thenCompose(opt -> {
 			if (opt.isPresent()) {
 				T updated = updater.apply(opt.get());
@@ -79,6 +81,7 @@ public interface RecordScope {
 
 	// COMPUTE FIELD IF ABSENT
 	default <T> @NotNull T computeFieldJsonIfAbsentSync(@NotNull Key key, @NotNull Codec<T> codec, @NotNull Supplier<T> supplier) {
+		// ToDO Remake with native implementation
 		Optional<T> existing = getFieldSync(key, codec);
 		if (existing.isPresent()) {
 			return existing.get();
@@ -89,6 +92,7 @@ public interface RecordScope {
 	}
 
 	default <T> @NotNull CompletableFuture<T> computeFieldJsonIfAbsent(@NotNull Key key, @NotNull Codec<T> codec, @NotNull Supplier<T> supplier) {
+		// ToDO Remake with native implementation
 		return getField(key, codec).thenCompose(opt -> {
 			if (opt.isPresent()) {
 				return CompletableFuture.completedFuture(opt.get());
@@ -124,4 +128,7 @@ public interface RecordScope {
 	default @NotNull CompletableFuture<@NotNull Collection<String>> listFields(boolean recursive) {
 		return CompletableFuture.supplyAsync(()  -> listFieldsSync(recursive));
 	}
+
+	// LIST
+	@NotNull ListScope list(@NotNull Key key);
 }
