@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -71,20 +72,7 @@ public class RedisListScope implements ListScope {
 		try {
 			acquireLockAndJedis(jedis -> {
 				int size = ListOperations.getSize(jedis, fieldKey, key, collectionName);
-
-				JsonUtils.hsetSync(
-						jedis,
-						fieldKey,
-						key.addPart(String.valueOf(size), ':'),
-						element,
-						collectionName
-				);
-
-				jedis.hset(
-						fieldKey.withCollectionName(collectionName),
-						key.addPart(Metadata.LIST_LENGTH.value(), ':').toString(),
-						String.valueOf(size + 1)
-				);
+				ListOperations.insert(jedis, fieldKey, key, collectionName, element, size);
 			});
 		} catch (Exception e) {
 			LOGGER.error("Exception occurred while pushing element to the back of a list in redis collection", e);
@@ -262,7 +250,26 @@ public class RedisListScope implements ListScope {
 
 	@Override
 	public @NotNull ListScope clearSync() {
-		return null;
+		acquireLockAndJedis(jedis -> {
+			ListOperations.ensureValidList(jedis, fieldKey, key, collectionName);
+
+			String fullKey = fieldKey.withCollectionName(collectionName);
+			Map<String, String> map = jedis.hgetAll(fullKey);
+			if (map == null) {
+				throw new IllegalStateException("List scope does not exist: " + fieldKey.withCollectionName(collectionName) + " - " + key);
+			}
+
+			String base = key.toString();
+
+			for (String childKey : map.keySet()) {
+				if (childKey.startsWith(base)) {
+					jedis.hdel(fullKey, childKey);
+				}
+			}
+
+			ListOperations.setSize(jedis, fieldKey, key, collectionName, 0);
+		});
+		return this;
 	}
 
 	@Override
