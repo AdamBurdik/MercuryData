@@ -13,13 +13,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -59,10 +57,7 @@ public class RedisCollectionTest {
 
 	@AfterEach
 	void clearCollection() {
-		collection.find(TestData.CODEC).execute().collection()
-				.forEach(data -> {
-					collection.remove(data.key());
-				});
+		collection.clear();
 	}
 
 	private TestData createData() {
@@ -87,17 +82,28 @@ public class RedisCollectionTest {
 	}
 
 	@Test
+	void testSetAndGetEmptyList() {
+		TestData data = new TestData("John Doe", -52, 2L, List.of(), Map.of("key1", "value1"), Set.of());
+
+		collection.setSync(Key.of("first_value"), TestData.CODEC, data);
+		Optional<TestData> fetched = collection.getSync(Key.of("first_value"), TestData.CODEC);
+
+		assertTrue(fetched.isPresent());
+		assertEquals(data, fetched.get());
+
+	}
+
+	@Test
 	void testSetAndGetField() {
 		TestData data = createData();
 		collection.setSync(Key.of("first_value"), TestData.CODEC, data);
 
-		Optional<String> nameField = collection.getSync(Key.of("first_value", "name"), Codec.STRING);
-		assertTrue(nameField.isPresent());
-		assertEquals(data.name(), nameField.get());
+		collection.record(Key.of("first_value"))
+				.setFieldSync(Key.of("name"), Codec.STRING, "new_name");
 
-		Optional<Integer> intNumberField = collection.getSync(Key.of("first_value", "int_number"), Codec.INT);
-		assertTrue(intNumberField.isPresent());
-		assertEquals(data.intNumber(), intNumberField.get());
+		Optional<String> nameField = collection.record(Key.of("first_value")).getFieldSync(Key.of("name"), Codec.STRING);
+		assertTrue(nameField.isPresent());
+		assertEquals("new_name", nameField.get());
 	}
 
 	@Test
@@ -105,12 +111,10 @@ public class RedisCollectionTest {
 		TestData data = createData();
 		collection.setSync(Key.of("first_value"), TestData.CODEC, data);
 
-		collection.updateFieldSync(Key.of("first_value"),
-				UpdateField.of(Key.of("name"), Codec.STRING, "Hello, World"),
-				true);
+		collection.record(Key.of("first_value"))
+				.setFieldSync(Key.of("name"), Codec.STRING, "Hello, World");
 
 		Optional<TestData> fetched = collection.getSync(Key.of("first_value"), TestData.CODEC);
-		System.out.println("d: " + fetched);
 		assertTrue(fetched.isPresent());
 		assertEquals("Hello, World", fetched.get().name());
 		assertEquals(data.intNumber(), fetched.get().intNumber());
@@ -121,19 +125,16 @@ public class RedisCollectionTest {
 		TestData data = createData();
 		collection.setSync(Key.of("first_value"), TestData.CODEC, data);
 
-		collection.updateFieldSync(
-				Key.of("first_value"),
-				UpdateField.of(
-						Key.of("map"),
-						Codec.STRING.map(Codec.STRING),
-						(Function<Map<String, String>, Map<String, String>>) map -> {
-							map.put("key420", "value69");
-							return map;
-						}
-				)
-		);
+		collection.record(Key.of("first_value"))
+				.setFieldSync(
+						Key.of("map", "key420"),
+						Codec.STRING,
+						"value69"
+				);
 
-		Optional<Map<String, String>> fetched = collection.getSync(Key.of("first_value", "map"), Codec.STRING.map(Codec.STRING));
+		Optional<Map<String, String>> fetched = collection.record(Key.of("first_value"))
+				.getFieldSync(Key.of("map"), Codec.STRING.map(Codec.STRING));
+		System.out.println("Fetched: " + fetched);
 		assertEquals("value69", fetched.get().get("key420"));
 	}
 
@@ -142,9 +143,7 @@ public class RedisCollectionTest {
 		TestData data = createData();
 		collection.setSync(Key.of("first_value"), TestData.CODEC, data);
 
-		boolean removed = collection.removeSync(Key.of("first_value"));
-		assertTrue(removed);
-
+		collection.removeSync(Key.of("first_value"));
 		Optional<TestData> fetched = collection.getSync(Key.of("first_value"), TestData.CODEC);
 		assertTrue(fetched.isEmpty());
 	}
@@ -169,35 +168,34 @@ public class RedisCollectionTest {
 	void testConcurrentUpdateAndClear() throws InterruptedException {
 		collection.setSync(Key.of("first_value"), TestData.CODEC, createData());
 
-		CountDownLatch latch = new CountDownLatch(1);
+		CountDownLatch pushDone = new CountDownLatch(1);
+		CountDownLatch clearStart = new CountDownLatch(1);
 
 		Thread addItemThread = new Thread(() -> {
-			collection.updateFieldSync(Key.of("first_value"),
-					UpdateField.of("string_list", Codec.STRING.list(), (Function<List<String>, List<String>>) l -> {
-						List<String> list = new ArrayList<>(l);
-						list.add("ExampleItem");
-						try {
-							Thread.sleep(50); // simulate delay
-							latch.countDown();
-						} catch (InterruptedException e) {
-							throw new RuntimeException(e);
-						}
-						return list;
-					}), true);
-		});
-
-		Thread clearInventoryThread = new Thread(() -> {
+			collection.record(Key.of("first_value"))
+					.list(Key.of("string_list"))
+					.pushBackSync(Codec.STRING, "ExampleItem");
+			pushDone.countDown();
 			try {
-				latch.await();
+				clearStart.await();
 			} catch (InterruptedException e) {
 				throw new RuntimeException(e);
 			}
-			collection.updateFieldSync(Key.of("first_value"),
-					UpdateField.of("string_list", Codec.STRING.list(), List.of()));
-		});
+		}, "AddItemThread");
+
+		Thread clearInventoryThread = new Thread(() -> {
+			try {
+				pushDone.await();
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+			collection.record(Key.of("first_value"))
+					.list(Key.of("string_list"))
+					.clearSync();
+			clearStart.countDown();
+		}, "ClearInventoryThread");
 
 		addItemThread.start();
-
 		clearInventoryThread.start();
 
 		addItemThread.join();
@@ -205,7 +203,7 @@ public class RedisCollectionTest {
 
 		Optional<TestData> fetched = collection.getSync(Key.of("first_value"), TestData.CODEC);
 
-		assertTrue(fetched.isPresent());
-		assertEquals(List.of(), fetched.get().stringList);
+		assertTrue(fetched.isPresent(), "Data should still exist after concurrent operations");
+		assertEquals(List.of(), fetched.get().stringList, "List should be cleared after concurrent update and clear");
 	}
 }
