@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import redis.clients.jedis.Jedis;
 
 import java.util.Map;
-import java.util.Optional;
 
 public class ListOperations {
 	// Checks if length metadata is present
@@ -90,35 +89,14 @@ public class ListOperations {
 			int offset
 	) {
 		int size = getSize(jedis, fieldKey, key, collectionName);
-
-		Map<String, String> map = jedis.hgetAll(fieldKey.withCollectionName(collectionName));
-		if (map == null) {
-			throw new IllegalStateException("List scope does not exist: " + fieldKey.withCollectionName(collectionName) + " - " + key);
-		}
-
-		for (String childKey : map.keySet()) {
-			String value = map.get(childKey);
-
-			String base = key.toString();
-
-			if (childKey.startsWith(base)) {
-				String remainingRawKey =  childKey.substring(base.length() + 1);
-				String path = childKey.replace(remainingRawKey, "");
-				Key remainingKey = Key.parse(remainingRawKey);
-
-				Key.KeyPart part = remainingKey.getParts().getFirst();
-
-				if (Metadata.isMetadata(part.getValue())) continue;
-
-				int index = Integer.parseInt(part.getValue());
-				if (index < offset) continue;
-
-				jedis.hset(fieldKey.withCollectionName(collectionName), path + (index + 1), value);
-			}
+		if (size > offset) {
+			size = shift(jedis, fieldKey, key, collectionName, offset, 1);
+		} else {
+			size++;
 		}
 
 		JsonUtils.hsetSync(jedis, fieldKey, key.addPart(String.valueOf(offset), ':'), element, collectionName);
-		setSize(jedis, fieldKey, key, collectionName, size + 1);
+		setSize(jedis, fieldKey, key, collectionName, size);
 	}
 
 	public static @Nullable JsonElement get(
@@ -161,5 +139,76 @@ public class ListOperations {
 		}
 
 		return element;
+	}
+
+	public static int shift(
+			@NotNull Jedis jedis,
+			@NotNull Key fieldKey,
+			@NotNull Key key,
+			@NotNull String collectionName,
+			int startingIndex,
+			int shiftAmount
+	) {
+		int size = getSize(jedis, fieldKey, key, collectionName);
+		if (shiftAmount == 0) return size;
+
+		if (startingIndex >= size) {
+			throw new IllegalArgumentException("Index out of range: " + startingIndex + " - " + size);
+		}
+
+		Map<String, String> map = jedis.hgetAll(fieldKey.withCollectionName(collectionName));
+		if (map == null) {
+			throw new IllegalStateException("List scope does not exist: " + fieldKey.withCollectionName(collectionName) + " - " + key);
+		}
+
+		for (String childKey : map.keySet()) {
+			String value = map.get(childKey);
+
+			String base = key.toString();
+
+			if (childKey.startsWith(base)) {
+				String remainingRawKey =  childKey.substring(base.length() + 1);
+				String path = childKey.replace(remainingRawKey, "");
+				Key remainingKey = Key.parse(remainingRawKey);
+
+				Key.KeyPart part = remainingKey.getParts().getFirst();
+
+				if (Metadata.isMetadata(part.getValue())) continue;
+
+				int index = Integer.parseInt(part.getValue());
+				if (index < startingIndex) continue;
+
+				jedis.hset(fieldKey.withCollectionName(collectionName), path + (index + shiftAmount), value);
+			}
+		}
+
+		int newSize = size;
+
+		if (shiftAmount > 0) {
+			newSize +=  shiftAmount;
+			for (int i = startingIndex; i < shiftAmount; i++) {
+				for (String childKey : map.keySet()) {
+					String base = key.toString() + ":" + i;
+
+					if (childKey.startsWith(base)) {
+						jedis.hdel(fieldKey.withCollectionName(collectionName), childKey);
+					}
+				}
+			}
+		} else {
+			newSize -= shiftAmount;
+			for (int i = size - shiftAmount; i < shiftAmount; i++) {
+				for (String childKey : map.keySet()) {
+					String base = key.toString() + ":" + i;
+
+					if (childKey.startsWith(base)) {
+						jedis.hdel(fieldKey.withCollectionName(collectionName), childKey);
+					}
+				}
+			}
+		}
+
+		setSize(jedis, fieldKey, key, collectionName, newSize);
+		return newSize;
 	}
 }
