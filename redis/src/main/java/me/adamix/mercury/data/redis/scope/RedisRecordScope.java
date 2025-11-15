@@ -3,7 +3,6 @@ package me.adamix.mercury.data.redis.scope;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.redis.utils.JsonUtils;
 import me.adamix.mercury.data.scope.ListScope;
@@ -82,7 +81,7 @@ public class RedisRecordScope implements RecordScope {
 			for (String childKey : map.keySet()) {
 				String value = map.get(childKey);
 				if (childKey.equals(base)) {
-					return Optional.ofNullable(JsonParser.parseString(value));
+						return Optional.of(JsonUtils.parseString(value));
 				}
 				if (childKey.startsWith(base)) {
 					JsonUtils.createNestedObject(jsonObject, childKey, me.adamix.mercury.data.utils.JsonUtils.parseString(value));
