@@ -343,6 +343,6 @@ public class RedisCollection implements MercuryCollection {
 			lock.unlock();
 		}
 
-		return keys.stream().map(Key::parse).collect(Collectors.toSet());
+		return keys.stream().map(s -> s.replaceFirst(this.name, "")).map(Key::parse).collect(Collectors.toSet());
 	}
 }
