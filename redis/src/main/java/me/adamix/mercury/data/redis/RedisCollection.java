@@ -158,8 +158,7 @@ public class RedisCollection implements MercuryCollection {
 	public @NotNull MercuryCollection removeSync(@NotNull Key key) {
 		LOGGER.debug("Redis remove operation - key: {}", key);
 		lock.lock();
-		try  (Jedis jedis = jedisPool.getResource()) {
-
+		try (Jedis jedis = jedisPool.getResource()) {
 			String fullKey = key.withCollectionName(this.name);
 
 			String type = jedis.type(fullKey);
@@ -172,7 +171,6 @@ public class RedisCollection implements MercuryCollection {
 					}
 
 					for (String childKey : map.keySet()) {
-						String value = map.get(childKey);
 						jedis.hdel(fullKey, childKey);
 					}
 				}
@@ -193,8 +191,7 @@ public class RedisCollection implements MercuryCollection {
 	public boolean existsSync(@NotNull Key key) {
 		LOGGER.debug("Redis exists operation - key: {}", key);
 		lock.lock();
-		try  (Jedis jedis = jedisPool.getResource()) {
-
+		try (Jedis jedis = jedisPool.getResource()) {
 			String fullKey = key.withCollectionName(this.name);
 
 			String type = jedis.type(fullKey);
@@ -212,7 +209,7 @@ public class RedisCollection implements MercuryCollection {
 	public @NotNull MercuryCollection clearSync() {
 		LOGGER.debug("Redis clear operation");
 		lock.lock();
-		try  (Jedis jedis = jedisPool.getResource()) {
+		try (Jedis jedis = jedisPool.getResource()) {
 			String cursor = "0";
 			do {
 				var scan = jedis.scan(cursor, new ScanParams().match(this.name + ".*"));
@@ -317,5 +314,34 @@ public class RedisCollection implements MercuryCollection {
 		}
 
 		return allKeys;
+	}
+
+	@Override
+	public @NotNull Collection<Key> keysSync() {
+		Collection<Key> keys = new ArrayList<>();
+
+		lock.lock();
+		try (Jedis jedis = jedisPool.getResource()) {
+			String cursor = ScanParams.SCAN_POINTER_START;
+			ScanParams params = new ScanParams().match(this.name + ".*").count(Integer.MAX_VALUE);
+
+			do {
+				// Gets all keys from redis from this collection
+				ScanResult<String> scanResult = jedis.scan(cursor, params);
+				keys.addAll(
+						scanResult.getResult().stream().map(Key::parse).toList()
+				);
+				cursor = scanResult.getCursor();
+
+			} while (!cursor.equals(ScanParams.SCAN_POINTER_START));
+
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred while getting keys from redis collection", e);
+			throw e;
+		} finally {
+			lock.unlock();
+		}
+
+		return keys;
 	}
 }
