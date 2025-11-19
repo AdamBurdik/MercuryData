@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public interface MercuryCollection {
@@ -111,8 +112,8 @@ public interface MercuryCollection {
 	// FIND
 	<T> @NotNull FindQueryBuilder<T> find(@NotNull Codec<T> codec);
 
-	@NotNull Collection<Key> keysSync();
-	default @NotNull CompletableFuture<@NotNull Collection<Key>> keys() {
+	@NotNull Set<Key> keysSync();
+	default @NotNull CompletableFuture<@NotNull Set<Key>> keys() {
 		return CompletableFuture.supplyAsync(this::keysSync);
 	}
 }

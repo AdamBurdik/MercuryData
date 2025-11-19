@@ -25,11 +25,14 @@ import redis.clients.jedis.resps.ScanResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class RedisCollection implements MercuryCollection {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RedisCollection.class);
@@ -317,8 +320,8 @@ public class RedisCollection implements MercuryCollection {
 	}
 
 	@Override
-	public @NotNull Collection<Key> keysSync() {
-		Collection<Key> keys = new ArrayList<>();
+	public @NotNull Set<Key> keysSync() {
+		Set<String> keys = new HashSet<>();
 
 		lock.lock();
 		try (Jedis jedis = jedisPool.getResource()) {
@@ -328,9 +331,7 @@ public class RedisCollection implements MercuryCollection {
 			do {
 				// Gets all keys from redis from this collection
 				ScanResult<String> scanResult = jedis.scan(cursor, params);
-				keys.addAll(
-						scanResult.getResult().stream().map(Key::parse).toList()
-				);
+				keys.addAll(scanResult.getResult());
 				cursor = scanResult.getCursor();
 
 			} while (!cursor.equals(ScanParams.SCAN_POINTER_START));
@@ -342,6 +343,6 @@ public class RedisCollection implements MercuryCollection {
 			lock.unlock();
 		}
 
-		return keys;
+		return keys.stream().map(Key::parse).collect(Collectors.toSet());
 	}
 }
