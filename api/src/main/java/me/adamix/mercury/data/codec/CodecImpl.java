@@ -142,7 +142,7 @@ public class CodecImpl {
 			if (json == null || json.isJsonNull()) {
 				return defaultValue;
 			}
-			T decoded = inner.decode(json);
+				T decoded = inner.decode(json);
 			if (decoded == null) {
 				return defaultValue;
 			}

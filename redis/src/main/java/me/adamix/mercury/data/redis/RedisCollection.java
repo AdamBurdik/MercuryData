@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import me.adamix.mercury.data.MercuryCollection;
 import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.key.Key;
+import me.adamix.mercury.data.metadata.Metadata;
 import me.adamix.mercury.data.query.FindQueryBuilder;
 import me.adamix.mercury.data.query.QueryResult;
 import me.adamix.mercury.data.query.filter.FieldFilter;
@@ -86,7 +87,7 @@ public class RedisCollection implements MercuryCollection {
 				hsetSyncArray(jedis, key, childKey.addPart(elementKey, '.'), jsonElement.getAsJsonArray());
 			} else {
 				String rawValue = JsonUtils.getRawValue(jsonElement);
-				if (rawValue == null) rawValue = "null";
+				if (rawValue == null) rawValue = Metadata.NULL.toString();
 				jedis.hset(key.withCollectionName(this.name), childKey.addPart(elementKey).toString(), rawValue);
 			}
 		}
@@ -125,7 +126,7 @@ public class RedisCollection implements MercuryCollection {
 				case "hash" -> {
 					Map<String, String> map = jedis.hgetAll(fullKey);
 					if (map == null) {
-						yield  Optional.empty();
+						yield Optional.empty();
 					}
 
 					JsonObject jsonObject = new JsonObject();
@@ -136,7 +137,7 @@ public class RedisCollection implements MercuryCollection {
 						JsonUtils.createNestedObject(jsonObject, childKey, element);
 					}
 
-					yield  Optional.of(jsonObject);
+					yield Optional.of(jsonObject);
 				}
 				case "string" -> {
 					String value = jedis.get(fullKey);
