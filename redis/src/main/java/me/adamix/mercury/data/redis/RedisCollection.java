@@ -144,6 +144,7 @@ public class RedisCollection implements MercuryCollection {
 							me.adamix.mercury.data.utils.JsonUtils.parseString(value)
 					);
 				}
+				case "none" -> Optional.empty();
 				default -> {
 					LOGGER.error("Unsupported key type: {}", type);
 					yield Optional.empty();
