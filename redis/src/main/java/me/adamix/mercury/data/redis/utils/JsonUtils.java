@@ -111,6 +111,10 @@ public class JsonUtils {
 		} else if (current.isJsonArray()) {
 			return ensureAndNavigateFromArray(current.getAsJsonArray(), partValue, nextIsArray);
 		}
+		// This probably will cause some errors. Enjoy my future self!
+		if (current.getAsString().equals(Metadata.NULL.value())) {
+			return JsonNull.INSTANCE;
+		}
 		return current;
 	}
 
