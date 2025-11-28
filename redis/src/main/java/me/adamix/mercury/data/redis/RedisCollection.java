@@ -85,7 +85,7 @@ public class RedisCollection implements MercuryCollection {
 			} else if (jsonElement.isJsonArray()) {
 				hsetSyncArray(jedis, key, childKey.addPart(elementKey, '.'), jsonElement.getAsJsonArray());
 			} else {
-				jedis.hset(key.withCollectionName(this.name), childKey.addPart(elementKey).toString(), jsonElement.getAsString());
+				jedis.hset(key.withCollectionName(this.name), childKey.addPart(elementKey).toString(), JsonUtils.getRawValue(jsonElement));
 			}
 		}
 	}
