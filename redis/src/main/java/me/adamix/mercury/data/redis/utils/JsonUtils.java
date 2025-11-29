@@ -93,7 +93,11 @@ public class JsonUtils {
 
 	private static void setValueAtPart(JsonElement current, String partValue, JsonElement value) {
 		if (current.isJsonObject()) {
-			current.getAsJsonObject().add(partValue, value);
+			if (value.isJsonPrimitive() && value.getAsString().equals(Metadata.NULL.value())) {
+				current.getAsJsonObject().add(partValue, JsonNull.INSTANCE);
+			} else {
+				current.getAsJsonObject().add(partValue, value);
+			}
 		} else if (current.isJsonArray()) {
 			JsonArray array = current.getAsJsonArray();
 			if (Metadata.isMetadata(partValue)) {
