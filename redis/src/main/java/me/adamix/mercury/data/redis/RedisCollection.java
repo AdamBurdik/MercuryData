@@ -257,7 +257,7 @@ public class RedisCollection implements MercuryCollection {
 					JsonObject jsonObject = new JsonObject();
 
 					map.forEach((childKey, value) -> {
-						JsonUtils.createNestedObject(jsonObject, childKey, JsonParser.parseString(value));
+						JsonUtils.createNestedObject(jsonObject, childKey, JsonUtils.parseString(value));
 					});
 
 					Optional<T> opt = codec.decodeOptional(jsonObject);
