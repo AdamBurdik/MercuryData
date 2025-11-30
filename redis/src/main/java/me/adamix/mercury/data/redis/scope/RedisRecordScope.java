@@ -48,8 +48,11 @@ public class RedisRecordScope implements RecordScope {
 			} else if (value.isJsonObject()) {
 				JsonUtils.hsetObjectSync(jedis, fullKey, key, value.getAsJsonObject(), collectionName);
 			} else if (value.isJsonArray()) {
-				// Ideal would be to fix this.
-				throw new IllegalArgumentException("Cannot store array at root. A key is required before any index");
+				if (key.toString().isEmpty()) {
+					// Ideal would be to fix this.
+					throw new IllegalArgumentException("Cannot store array at root. A key is required before any index");
+				}
+				JsonUtils.hsetSyncArray(jedis, fullKey, key, value.getAsJsonArray(), collectionName);
 			} else {
 				LOGGER.error("Invalid value for key {} in RedisRecordScope", key);
 			}
