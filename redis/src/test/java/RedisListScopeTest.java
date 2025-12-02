@@ -165,4 +165,27 @@ public class RedisListScopeTest {
 
 		assertEquals("Bye, World!", fetched.get());
 	}
+
+	@Test
+	void testPushBackToEmptyList() {
+		collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.clearSync();
+
+		int size = collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.sizeSync();
+
+		assertEquals(0, size);
+
+		collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.pushBackSync(Codec.STRING, "Bye, World!");
+
+		size = collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.sizeSync();
+
+		assertEquals(1, size);
+	}
 }
