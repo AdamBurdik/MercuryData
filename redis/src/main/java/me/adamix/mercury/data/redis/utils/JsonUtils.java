@@ -186,7 +186,7 @@ public class JsonUtils {
 			} else if (jsonElement.isJsonArray()) {
 				hsetSyncArray(jedis, key, childKey.addPart(elementKey, '.'), jsonElement.getAsJsonArray(), collectionName);
 			} else {
-				jedis.hset(key.withCollectionName(collectionName), childKey.addPart(elementKey).toString(), jsonElement.toString());
+				jedis.hset(key.withCollectionName(collectionName), childKey.addPart(elementKey).toString(), jsonElement.getAsString());
 			}
 		}
 	}
