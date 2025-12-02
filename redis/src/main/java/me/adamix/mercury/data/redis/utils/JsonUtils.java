@@ -163,9 +163,9 @@ public class JsonUtils {
 			@NotNull String collectionName
 	) {
 		if (jsonElement.isJsonObject()) {
-			hsetSync(jedis, key, childKey, jsonElement.getAsJsonObject(), collectionName);
+			hsetObjectSync(jedis, key, childKey, jsonElement.getAsJsonObject(), collectionName);
 		} else if (jsonElement.isJsonArray()) {
-			hsetSync(jedis, key, childKey, jsonElement.getAsJsonArray(), collectionName);
+			hsetSyncArray(jedis, key, childKey, jsonElement.getAsJsonArray(), collectionName);
 		} else {
 			jedis.hset(key.withCollectionName(collectionName), childKey.toString(), jsonElement.getAsString());
 		}
