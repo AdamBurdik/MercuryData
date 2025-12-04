@@ -197,7 +197,12 @@ public class RedisListScope implements ListScope {
 
 	@Override
 	public @NotNull ListScope removeSync(int index) {
-		return null;
+		try {
+			acquireLockAndJedis(jedis -> ListOperations.remove(jedis, fieldKey, key, collectionName, index));
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred removing an element from a list in redis collection", e);
+		}
+		return this;
 	}
 
 	@Override
@@ -212,7 +217,23 @@ public class RedisListScope implements ListScope {
 
 	@Override
 	public @NotNull ListScope removeIfJsonSync(@NotNull Predicate<JsonElement> predicate) {
-		return null;
+		try {
+			acquireLockAndJedis(jedis -> {
+				int size = ListOperations.getSize(jedis, fieldKey, key, collectionName);
+
+				// TODO Rewrite to use just just hgetall call
+				Collection<JsonElement> elements =  new ArrayList<>();
+				for (int i = 0; i < size; i++) {
+					JsonElement element = ListOperations.get(jedis, fieldKey, key, collectionName, i);
+					if (predicate.test(element)) {
+						ListOperations.remove(jedis, fieldKey, key, collectionName, i);
+					}
+				}
+			});
+		} catch (Exception e) {
+			LOGGER.error("Exception occurred removing an element from a list in redis collection", e);
+		}
+		return this;
 	}
 
 	@Override
