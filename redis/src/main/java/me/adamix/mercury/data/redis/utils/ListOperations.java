@@ -161,20 +161,26 @@ public class ListOperations {
 			throw new IllegalStateException("List scope does not exist: " + fieldKey.withCollectionName(collectionName) + " - " + key);
 		}
 
+		// Replicate the values
 		for (String childKey : map.keySet()) {
 			String value = map.get(childKey);
 
 			String base = key.toString();
 
 			if (childKey.startsWith(base)) {
-				String remainingRawKey =  childKey.substring(base.length() + 1);
+				// Gets an index from child key
+				// Example:    childKey =   user.friends:0.name
+				//                          user.friends: is removed, and remaining is 0.name
+				String remainingRawKey = childKey.substring(base.length() + 1);
 				String path = childKey.replace(remainingRawKey, "");
 				Key remainingKey = Key.parse(remainingRawKey);
 
+				// We can get the first part
 				Key.KeyPart part = remainingKey.getParts().getFirst();
 
 				if (Metadata.isMetadata(part.getValue())) continue;
 
+				// and parse it as integer
 				int index = Integer.parseInt(part.getValue());
 				if (index < startingIndex) continue;
 
@@ -185,8 +191,9 @@ public class ListOperations {
 		int newSize = size;
 
 		if (shiftAmount > 0) {
-			newSize +=  shiftAmount;
-			for (int i = startingIndex; i < shiftAmount; i++) {
+			// Delete the part in between
+			newSize += shiftAmount;
+			for (int i = startingIndex; i < startingIndex + shiftAmount; i++) {
 				for (String childKey : map.keySet()) {
 					String base = key.toString() + ":" + i;
 
@@ -196,8 +203,11 @@ public class ListOperations {
 				}
 			}
 		} else {
-			newSize -= shiftAmount;
-			for (int i = size - shiftAmount; i < shiftAmount; i++) {
+			// Delete the tail
+			int absAmount = Math.abs(shiftAmount);
+			newSize -= absAmount;
+
+			for (int i = size - absAmount; i < size; i++) {
 				for (String childKey : map.keySet()) {
 					String base = key.toString() + ":" + i;
 
@@ -208,7 +218,39 @@ public class ListOperations {
 			}
 		}
 
+		// Adjust size
 		setSize(jedis, fieldKey, key, collectionName, newSize);
 		return newSize;
+	}
+
+	public static void remove(
+			@NotNull Jedis jedis,
+			@NotNull Key fieldKey,
+			@NotNull Key key,
+			@NotNull String collectionName,
+			int index
+	) {
+		ensureIndex(jedis, fieldKey, key, collectionName, index);
+
+		Map<String, String> map = jedis.hgetAll(fieldKey.withCollectionName(collectionName));
+		if (map == null) {
+			return;
+		}
+
+		int size = getSize(jedis, fieldKey, key, collectionName);
+
+		// If removing the last one, we need to manually delete it. Otherwise, it will be replaced by shifting
+		if (index + 1 >= size) {
+			String base = key.toString() + ":" + index;
+			JsonObject jsonObject =  new JsonObject();
+
+			for (String childKey : map.keySet()) {
+				if (childKey.startsWith(base)) {
+					jedis.hdel(fieldKey.withCollectionName(collectionName), childKey);
+				}
+			}
+		}
+
+		shift(jedis, fieldKey, key, collectionName, index + 1, -1);
 	}
 }
