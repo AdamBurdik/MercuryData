@@ -187,7 +187,7 @@ public class CodecImpl {
 		@Override
 		public Set<T> decode(JsonElement json) {
 			JsonArray array = json.getAsJsonArray();
-			Set<T> set = new HashSet<>(array.size());
+			Set<T> set = new LinkedHashSet<>(array.size());
 			for (JsonElement element : array) {
 				set.add(inner.decode(element));
 			}
