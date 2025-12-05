@@ -249,8 +249,11 @@ public class ListOperations {
 					jedis.hdel(fieldKey.withCollectionName(collectionName), childKey);
 				}
 			}
+
+			setSize(jedis, fieldKey, key, collectionName, size - 1);
+		} else {
+			shift(jedis, fieldKey, key, collectionName, index + 1, -1);
 		}
 
-		shift(jedis, fieldKey, key, collectionName, index + 1, -1);
 	}
 }
