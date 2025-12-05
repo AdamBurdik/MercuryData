@@ -13,6 +13,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.text.CollationKey;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -74,7 +77,7 @@ public class RedisListScopeTest {
 	void setData() {
 		data = new TestData(
 				"John Doe",
-				Set.of("first_element", "second_element", "last_element"),
+				new LinkedHashSet<>(List.of("first_element", "second_element", "last_element")),
 				Set.of(
 						new Value(
 								"key1",
@@ -187,5 +190,55 @@ public class RedisListScopeTest {
 				.sizeSync();
 
 		assertEquals(1, size);
+	}
+
+	@Test
+	void testRemove() {
+		Collection<String> list = collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.getAllSync(Codec.STRING);
+
+		assertEquals(
+				List.of("first_element", "second_element", "last_element"),
+				List.copyOf(list)
+		);
+
+		collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.removeSync(2);
+
+		list = collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.getAllSync(Codec.STRING);
+
+		assertEquals(
+				List.of("first_element", "last_element"),
+				List.copyOf(list)
+		);
+	}
+
+	@Test
+	void testRemoveIf() {
+		Collection<String> list = collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.getAllSync(Codec.STRING);
+
+		assertEquals(
+				List.of("first_element", "second_element", "last_element"),
+				List.copyOf(list)
+		);
+
+		collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.removeIfSync(Codec.STRING, s -> s.equals("second_element"));
+
+		list = collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.getAllSync(Codec.STRING);
+
+		assertEquals(
+				List.of("first_element", "last_element"),
+				List.copyOf(list)
+		);
 	}
 }
