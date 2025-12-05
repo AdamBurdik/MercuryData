@@ -205,7 +205,7 @@ public class RedisListScopeTest {
 
 		collection.record(entityKey)
 				.list(Key.of("string_list"))
-				.removeSync(2);
+				.removeSync(1);
 
 		list = collection.record(entityKey)
 				.list(Key.of("string_list"))
@@ -213,6 +213,31 @@ public class RedisListScopeTest {
 
 		assertEquals(
 				List.of("first_element", "last_element"),
+				List.copyOf(list)
+		);
+	}
+
+	@Test
+	void testRemoveLast() {
+		Collection<String> list = collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.getAllSync(Codec.STRING);
+
+		assertEquals(
+				List.of("first_element", "second_element", "last_element"),
+				List.copyOf(list)
+		);
+
+		collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.removeSync(2);
+
+		list = collection.record(entityKey)
+				.list(Key.of("string_list"))
+				.getAllSync(Codec.STRING);
+
+		assertEquals(
+				List.of("first_element", "second_element"),
 				List.copyOf(list)
 		);
 	}
