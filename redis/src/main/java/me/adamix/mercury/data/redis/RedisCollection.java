@@ -268,7 +268,7 @@ public class RedisCollection implements MercuryCollection {
 					AtomicBoolean filtersPassed = new AtomicBoolean(true);
 
 					map.forEach((fieldKey, fieldValue) -> {
-						List<FieldFilter<?>> filters = query.getFieldFilter(Key.of(fieldKey));
+						List<FieldFilter<?>> filters = query.getFieldFilter(Key.parse(fieldKey));
 
 						// Apply filters. If any filters fail, the lambda will be exited
 						for (FieldFilter<?> filter : filters) {
