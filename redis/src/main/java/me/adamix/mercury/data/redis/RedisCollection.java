@@ -272,7 +272,7 @@ public class RedisCollection implements MercuryCollection {
 
 						// Apply filters. If any filters fail, the lambda will be exited
 						for (FieldFilter<?> filter : filters) {
-							if (!applyFilter(filter, JsonParser.parseString(fieldValue))) {
+							if (!applyFilter(filter, JsonUtils.parseString(fieldValue))) {
 								filtersPassed.set(false);
 								return;
 							}
