@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import me.adamix.mercury.data.metadata.Metadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public class JsonUtils {
 	}
 
 	public static @NotNull JsonElement parseString(@Nullable String input) {
-		if (input == null) return JsonNull.INSTANCE;
+		if (input == null || input.equals(Metadata.NULL.value())) return JsonNull.INSTANCE;
 
 		input = input.trim();
 
