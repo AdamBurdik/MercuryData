@@ -1,4 +1,3 @@
-import ch.qos.logback.core.boolex.EvaluationException;
 import me.adamix.mercury.data.MercuryCollection;
 import me.adamix.mercury.data.MercuryDatabase;
 import me.adamix.mercury.data.codec.Codec;

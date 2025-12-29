@@ -13,6 +13,6 @@ public interface FindQueryBuilder<T> {
 	<U> @NotNull FindQueryBuilder<T> withFieldFilter(@NotNull FieldFilter<U> filter);
 	@NotNull FindQueryBuilder<T> limit(int limit);
 
-	@NotNull QueryResult<T> execute();
+	@NotNull QueryResult<T> execute() throws Exception;
 	@NotNull CompletableFuture<@NotNull QueryResult<T>> executeAsync();
 }

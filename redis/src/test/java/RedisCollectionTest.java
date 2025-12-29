@@ -149,7 +149,7 @@ public class RedisCollectionTest {
 	}
 
 	@Test
-	void testFindQuery() {
+	void testFindQuery() throws Exception {
 		TestData data1 = new TestData("first_name", 151, 525232L, List.of("first", "second"), Map.of(), Set.of(100L, 5245L));
 		TestData data2 = new TestData("second_name", -52, 2L, List.of(), Map.of("key1", "value1"), Set.of(100L, -32L));
 

@@ -17,11 +17,11 @@ import java.util.function.Predicate;
 
 public class RedisFindQueryBuilder<T> implements FindQueryBuilder<T> {
 	private final @NotNull Codec<T> codec;
-	private final @NotNull Function<RedisFindQueryBuilder<T>, QueryResult<T>> executor;
+	private final @NotNull QueryExecutor<T> executor;
 	private final @NotNull List<@NotNull FieldFilter<?>> fieldFilters = new ArrayList<>();
 	private int limit = Integer.MAX_VALUE;
 
-	public RedisFindQueryBuilder(@NotNull Codec<T> codec, @NotNull Function<RedisFindQueryBuilder<T>, QueryResult<T>> executor) {
+	public RedisFindQueryBuilder(@NotNull Codec<T> codec, @NotNull QueryExecutor<T> executor) {
 		this.codec = codec;
 		this.executor = executor;
 	}
@@ -45,13 +45,19 @@ public class RedisFindQueryBuilder<T> implements FindQueryBuilder<T> {
 	}
 
 	@Override
-	public @NotNull QueryResult<T> execute() {
+	public @NotNull QueryResult<T> execute() throws Exception {
 		return executor.apply(this);
 	}
 
 	@Override
 	public @NotNull CompletableFuture<@NotNull QueryResult<T>> executeAsync() {
-		return CompletableFuture.supplyAsync(this::execute);
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				return this.execute();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
 	}
 
 	public @NotNull List<FieldFilter<?>> getFieldFilter(@NotNull Key key) {
@@ -68,7 +74,7 @@ public class RedisFindQueryBuilder<T> implements FindQueryBuilder<T> {
 		return codec;
 	}
 
-	public @NotNull Function<RedisFindQueryBuilder<T>, QueryResult<T>> executor() {
+	public @NotNull QueryExecutor<T> executor() {
 		return executor;
 	}
 

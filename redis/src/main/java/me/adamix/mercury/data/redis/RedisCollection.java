@@ -265,13 +265,8 @@ public class RedisCollection implements MercuryCollection {
 						JsonUtils.createNestedObject(jsonObject, childKey, JsonUtils.parseString(value));
 					});
 
-					Optional<T> opt;
-					try {
-						opt = codec.decodeOptional(jsonObject);
-						if (opt.isEmpty()) {
-							continue;
-						}
-					} catch (MissingFieldException e) {
+					Optional<T> opt = codec.decodeOptional(jsonObject);
+					if (opt.isEmpty()) {
 						continue;
 					}
 
