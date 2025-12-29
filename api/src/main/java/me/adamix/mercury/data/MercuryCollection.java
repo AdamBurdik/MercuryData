@@ -6,8 +6,6 @@ import me.adamix.mercury.data.codec.Codec;
 import me.adamix.mercury.data.exception.MissingFieldException;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.query.FindQueryBuilder;
-import me.adamix.mercury.data.query.find.FindQuery;
-import me.adamix.mercury.data.query.find.TypedQuery;
 import me.adamix.mercury.data.scope.RecordScope;
 import org.jetbrains.annotations.NotNull;
 
