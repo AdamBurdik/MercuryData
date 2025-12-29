@@ -2,13 +2,16 @@ package me.adamix.mercury.data.scope;
 
 import com.google.gson.JsonElement;
 import me.adamix.mercury.data.codec.Codec;
+import me.adamix.mercury.data.exception.MissingFieldException;
 import me.adamix.mercury.data.key.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public interface ListScope {
 
@@ -52,10 +55,22 @@ public interface ListScope {
 
 	// GET (codec)
 	default <T> @NotNull Optional<T> getSync(int index, @NotNull Codec<T> codec) {
-		return getJsonSync(index).map(codec::decode);
+		return getJsonSync(index).flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		});
 	}
 	default <T> @NotNull CompletableFuture<Optional<T>> get(int index, @NotNull Codec<T> codec) {
-		return getJson(index).thenApply(opt -> opt.map(codec::decode));
+		return getJson(index).thenApply(opt -> opt.flatMap(json -> {
+            try {
+                return Optional.ofNullable(codec.decode(json));
+            } catch (MissingFieldException e) {
+                return Optional.empty();
+            }
+        }));
 	}
 
 	// GET FIRST/LAST JSON (without removing)
@@ -73,17 +88,41 @@ public interface ListScope {
 
 	// GET FIRST/LAST (codec)
 	default <T> @NotNull Optional<T> getFirstSync(@NotNull Codec<T> codec) {
-		return getFirstJsonSync().map(codec::decode);
+		return getFirstJsonSync().flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		});
 	}
 	default <T> @NotNull CompletableFuture<Optional<T>> getFirst(@NotNull Codec<T> codec) {
-		return getFirstJson().thenApply(opt -> opt.map(codec::decode));
+		return getFirstJson().thenApply(opt -> opt.flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		}));
 	}
 
 	default <T> @NotNull Optional<T> getLastSync(@NotNull Codec<T> codec) {
-		return getLastJsonSync().map(codec::decode);
+		return getLastJsonSync().flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		});
 	}
 	default <T> @NotNull CompletableFuture<Optional<T>> getLast(@NotNull Codec<T> codec) {
-		return getLastJson().thenApply(opt -> opt.map(codec::decode));
+		return getLastJson().thenApply(opt -> opt.flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		}));
 	}
 
 	// GET RANGE JSON (sublist)
@@ -95,12 +134,27 @@ public interface ListScope {
 	// GET RANGE (codec)
 	default <T> @NotNull Collection<T> getRangeSync(int fromIndex, int toIndex, @NotNull Codec<T> codec) {
 		return getRangeJsonSync(fromIndex, toIndex).stream()
-				.map(codec::decode)
+				.map(json -> {
+					try {
+						return codec.decode(json);
+					} catch (MissingFieldException e) {
+						return null;
+					}
+				})
+				.filter(Objects::nonNull)
 				.collect(java.util.stream.Collectors.toList());
 	}
+
 	default <T> @NotNull CompletableFuture<Collection<T>> getRange(int fromIndex, int toIndex, @NotNull Codec<T> codec) {
 		return getRangeJson(fromIndex, toIndex).thenApply(col -> col.stream()
-				.map(codec::decode)
+				.map(json -> {
+					try {
+						return codec.decode(json);
+					} catch (MissingFieldException e) {
+						return null;
+					}
+				})
+				.filter(Objects::nonNull)
 				.collect(java.util.stream.Collectors.toList()));
 	}
 
@@ -113,12 +167,26 @@ public interface ListScope {
 	// GET ALL (codec)
 	default <T> @NotNull Collection<T> getAllSync(@NotNull Codec<T> codec) {
 		return getAllJsonSync().stream()
-				.map(codec::decode)
+				.map(json -> {
+					try {
+						return codec.decode(json);
+					} catch (MissingFieldException e) {
+						return null;
+					}
+				})
+				.filter(Objects::nonNull)
 				.collect(java.util.stream.Collectors.toList());
 	}
 	default <T> @NotNull CompletableFuture<Collection<T>> getAll(@NotNull Codec<T> codec) {
 		return getAllJson().thenApply(col -> col.stream()
-				.map(codec::decode)
+				.map(json -> {
+					try {
+						return codec.decode(json);
+					} catch (MissingFieldException e) {
+						return null;
+					}
+				})
+				.filter(Objects::nonNull)
 				.collect(java.util.stream.Collectors.toList()));
 	}
 
@@ -178,10 +246,22 @@ public interface ListScope {
 
 	// REMOVE IF (codec)
 	default <T> @NotNull ListScope removeIfSync(@NotNull Codec<T> codec, @NotNull Predicate<T> predicate) {
-		return removeIfJsonSync(json -> predicate.test(codec.decode(json)));
+		return removeIfJsonSync(json -> {
+			try {
+				return predicate.test(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return false;
+			}
+		});
 	}
 	default <T> @NotNull CompletableFuture<ListScope> removeIf(@NotNull Codec<T> codec, @NotNull Predicate<T> predicate) {
-		return removeIfJson(json -> predicate.test(codec.decode(json)));
+		return removeIfJson(json -> {
+			try {
+				return predicate.test(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return false;
+			}
+		});
 	}
 
 	// POP JSON
@@ -197,17 +277,41 @@ public interface ListScope {
 
 	// POP (codec)
 	default <T> @NotNull Optional<T> popBackSync(@NotNull Codec<T> codec) {
-		return popBackJsonSync().map(codec::decode);
+		return popBackJsonSync().flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		});
 	}
 	default <T> @NotNull CompletableFuture<Optional<T>> popBack(@NotNull Codec<T> codec) {
-		return popBackJson().thenApply(opt -> opt.map(codec::decode));
+		return popBackJson().thenApply(opt -> opt.flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		}));
 	}
 
 	default <T> @NotNull Optional<T> popFrontSync(@NotNull Codec<T> codec) {
-		return popFrontJsonSync().map(codec::decode);
+		return popFrontJsonSync().flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		});
 	}
 	default <T> @NotNull CompletableFuture<Optional<T>> popFront(@NotNull Codec<T> codec) {
-		return popFrontJson().thenApply(opt -> opt.map(codec::decode));
+		return popFrontJson().thenApply(opt -> opt.flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		}));
 	}
 
 	// CONTAINS JSON

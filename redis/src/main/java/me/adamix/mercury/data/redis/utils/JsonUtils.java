@@ -93,7 +93,14 @@ public class JsonUtils {
 
 	private static void setValueAtPart(JsonElement current, String partValue, JsonElement value) {
 		if (current.isJsonObject()) {
-			if (value.isJsonPrimitive() && value.getAsString().equals(Metadata.NULL.value())) {
+			if (partValue.equals(Metadata.EMPTY.value())) {
+				return;
+			}
+			if (
+					value.isJsonPrimitive() && (
+							value.getAsString().equals(Metadata.NULL.value())
+					)
+			) {
 				current.getAsJsonObject().add(partValue, JsonNull.INSTANCE);
 			} else {
 				current.getAsJsonObject().add(partValue, value);
@@ -213,6 +220,6 @@ public class JsonUtils {
 
 			index++;
 		}
-		jedis.hset(key.withCollectionName(collectionName), childKey.addPart("__length__", ':').toString(), String.valueOf(array.size()));
+		jedis.hset(key.withCollectionName(collectionName), childKey.addPart(Metadata.LIST_LENGTH.value(), ':').toString(), String.valueOf(array.size()));
 	}
 }

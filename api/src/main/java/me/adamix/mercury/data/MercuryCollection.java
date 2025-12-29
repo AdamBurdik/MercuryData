@@ -3,12 +3,14 @@ package me.adamix.mercury.data;
 
 import com.google.gson.JsonElement;
 import me.adamix.mercury.data.codec.Codec;
+import me.adamix.mercury.data.exception.MissingFieldException;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.query.FindQueryBuilder;
+import me.adamix.mercury.data.query.find.FindQuery;
+import me.adamix.mercury.data.query.find.TypedQuery;
 import me.adamix.mercury.data.scope.RecordScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -33,11 +35,23 @@ public interface MercuryCollection {
 		return CompletableFuture.supplyAsync(() -> getJsonSync(key));
 	}
 	default <T> @NotNull Optional<T> getSync(@NotNull Key key, @NotNull Codec<T> codec) {
-		return getJsonSync(key).map(codec::decode);
+		return getJsonSync(key).flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		});
 	}
 
 	default <T> @NotNull CompletableFuture<Optional<T>> get(@NotNull Key key, @NotNull Codec<T> codec) {
-		return getJson(key).thenApply(opt -> opt.map(codec::decode));
+		return getJson(key).thenApply(opt -> opt.flatMap(json -> {
+            try {
+                return Optional.ofNullable(codec.decode(json));
+            } catch (MissingFieldException e) {
+                return Optional.empty();
+            }
+        }));
 	}
 	default <T> @NotNull T getOrDefaultSync(@NotNull Key key, @NotNull Codec<T> codec, @NotNull T defaultValue) {
 		return getSync(key, codec).orElse(defaultValue);

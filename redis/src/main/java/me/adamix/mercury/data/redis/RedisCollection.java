@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.adamix.mercury.data.MercuryCollection;
 import me.adamix.mercury.data.codec.Codec;
+import me.adamix.mercury.data.exception.MissingFieldException;
 import me.adamix.mercury.data.key.Key;
 import me.adamix.mercury.data.metadata.Metadata;
 import me.adamix.mercury.data.query.FindQueryBuilder;
@@ -78,6 +79,10 @@ public class RedisCollection implements MercuryCollection {
 	}
 
 	private void hsetSync(@NotNull Jedis jedis, @NotNull Key key, @NotNull Key childKey, @NotNull JsonObject jsonObject) {
+		if (jsonObject.isEmpty()) {
+			jedis.hset(key.withCollectionName(this.name), childKey.addPart(Metadata.EMPTY.value(), '.').toString(), "true");
+			return;
+		}
 		for (String elementKey : jsonObject.keySet()) {
 			JsonElement jsonElement = jsonObject.get(elementKey);
 
@@ -109,7 +114,7 @@ public class RedisCollection implements MercuryCollection {
 
 			index++;
 		}
-		jedis.hset(key.withCollectionName(this.name), childKey.addPart("__length__", ':').toString(), String.valueOf(array.size()));
+		jedis.hset(key.withCollectionName(this.name), childKey.addPart(Metadata.LIST_LENGTH.value(), ':').toString(), String.valueOf(array.size()));
 	}
 
 	@Override
@@ -142,7 +147,7 @@ public class RedisCollection implements MercuryCollection {
 				case "string" -> {
 					String value = jedis.get(fullKey);
 					yield Optional.of(
-							me.adamix.mercury.data.utils.JsonUtils.parseString(value)
+							JsonUtils.parseString(value)
 					);
 				}
 				case "none" -> Optional.empty();
@@ -260,8 +265,13 @@ public class RedisCollection implements MercuryCollection {
 						JsonUtils.createNestedObject(jsonObject, childKey, JsonUtils.parseString(value));
 					});
 
-					Optional<T> opt = codec.decodeOptional(jsonObject);
-					if (opt.isEmpty()) {
+					Optional<T> opt;
+					try {
+						opt = codec.decodeOptional(jsonObject);
+						if (opt.isEmpty()) {
+							continue;
+						}
+					} catch (MissingFieldException e) {
 						continue;
 					}
 
@@ -295,11 +305,16 @@ public class RedisCollection implements MercuryCollection {
 			} finally {
 				lock.unlock();
 			}
-		});
+        });
 	}
 
 	private <T> boolean applyFilter(@NotNull FieldFilter<T> filter, @NotNull JsonElement jsonElement) {
-		return filter.test(filter.codec().decode(jsonElement));
+		try {
+			T value = filter.codec().decode(jsonElement);
+			return filter.test(value);
+		} catch (MissingFieldException e) {
+			return false;
+		}
 	}
 
 	private @NotNull List<String> getAllKeys(@NotNull Jedis jedis, @NotNull ScanParams params) {

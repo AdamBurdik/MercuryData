@@ -2,6 +2,7 @@ package me.adamix.mercury.data.scope;
 
 import com.google.gson.JsonElement;
 import me.adamix.mercury.data.codec.Codec;
+import me.adamix.mercury.data.exception.MissingFieldException;
 import me.adamix.mercury.data.key.Key;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,11 +35,23 @@ public interface RecordScope {
 		return CompletableFuture.supplyAsync(() -> getFieldJsonSync(key));
 	}
 	default <T> @NotNull Optional<T> getFieldSync(@NotNull Key key, @NotNull Codec<T> codec) {
-		return getFieldJsonSync(key).map(codec::decode);
+		return getFieldJsonSync(key).flatMap(json -> {
+			try {
+				return Optional.ofNullable(codec.decode(json));
+			} catch (MissingFieldException e) {
+				return Optional.empty();
+			}
+		});
 	}
 
 	default <T> @NotNull CompletableFuture<Optional<T>> getField(@NotNull Key key, @NotNull Codec<T> codec) {
-		return getFieldJson(key).thenApply(opt -> opt.map(codec::decode));
+		return getFieldJson(key).thenApply(opt -> opt.flatMap(json -> {
+            try {
+                return Optional.ofNullable(codec.decode(json));
+            } catch (MissingFieldException e) {
+                return Optional.empty();
+            }
+        }));
 	}
 
 	default <T> @NotNull T getFieldOrDefaultSync(@NotNull Key key, @NotNull Codec<T> codec, @NotNull T defaultValue) {

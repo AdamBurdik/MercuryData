@@ -1,6 +1,7 @@
 package me.adamix.mercury.data.codec;
 
 import com.google.gson.*;
+import me.adamix.mercury.data.exception.MissingFieldException;
 import me.adamix.mercury.data.utils.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +139,7 @@ public class CodecImpl {
 		}
 
 		@Override
-		public T decode(JsonElement json) {
+		public T decode(JsonElement json) throws MissingFieldException {
 			if (json == null || json.isJsonNull()) {
 				return defaultValue;
 			}
@@ -162,7 +163,7 @@ public class CodecImpl {
 		}
 
 		@Override
-		public List<T> decode(JsonElement json) {
+		public List<T> decode(JsonElement json) throws MissingFieldException {
 			JsonArray array = json.getAsJsonArray();
 			List<T> list = new ArrayList<>(array.size());
 			for (JsonElement element : array) {
@@ -185,7 +186,7 @@ public class CodecImpl {
 		}
 
 		@Override
-		public Set<T> decode(JsonElement json) {
+		public Set<T> decode(JsonElement json) throws MissingFieldException {
 			JsonArray array = json.getAsJsonArray();
 			Set<T> set = new LinkedHashSet<>(array.size());
 			for (JsonElement element : array) {
@@ -209,7 +210,7 @@ public class CodecImpl {
 		}
 
 		@Override
-		public Map<K, V> decode(JsonElement json) {
+		public Map<K, V> decode(JsonElement json) throws MissingFieldException {
 			if (json == null || json.isJsonNull() || !json.isJsonObject()) {
 				return null;
 			}

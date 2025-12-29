@@ -1,6 +1,7 @@
 package me.adamix.mercury.data.codec;
 
 import com.google.gson.JsonElement;
+import me.adamix.mercury.data.exception.MissingFieldException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +21,9 @@ public interface Codec<T> {
 	Codec<UUID> UUID = CodecImpl.UUID;
 
 	JsonElement encode(T value);
-	T decode(JsonElement json);
+	T decode(JsonElement json) throws MissingFieldException;
 
-	default @NotNull Optional<T> decodeOptional(@NotNull JsonElement jsonElement) {
+	default @NotNull Optional<T> decodeOptional(@NotNull JsonElement jsonElement) throws MissingFieldException {
 		return Optional.ofNullable(decode(jsonElement));
 	}
 
