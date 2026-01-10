@@ -20,16 +20,24 @@ public class ListOperations {
 	) {
 		String valueKey = key.addPart(Metadata.LIST_LENGTH.value(), ':').toString();
 
+		String fullKey = fieldKey.withCollectionName(collectionName);
+
 		String rawLength = jedis.hget(
-				fieldKey.withCollectionName(collectionName),
+				fullKey,
 				valueKey
 		);
 		if (rawLength == null) {
-			// No length metadata = not a list!
-			throw new IllegalStateException(
-					"Field '" + key + "' is not a list. " +
-							"Cannot perform list operations on non-list field."
-			);
+			// Temporary solution: just create list in this path.
+			// This is not good, because it will screw up data if misused.
+			// Same key CAN theoretically exist for both map and list
+			// but its not tested
+			setSize(jedis, fieldKey, key, collectionName, 0);
+
+//			// No length metadata = not a list!
+//			throw new IllegalStateException(
+//					"Field '" + key + "' is not a list. " +
+//							"Cannot perform list operations on non-list field."
+//			);
 		}
 		return rawLength;
 	}
