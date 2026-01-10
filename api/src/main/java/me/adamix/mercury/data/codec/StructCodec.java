@@ -14,7 +14,9 @@ public class StructCodec {
             @NotNull JsonObject object
     ) throws MissingFieldException {
         JsonElement element = object.get(name);
-        if (element == null) throw new MissingFieldException(name);
+        // Temporary solution for checking if codec is optional
+        // It should not depend on built in optional codec
+        if (element == null && !(codec instanceof CodecImpl.OptionalCodec<T>)) throw new MissingFieldException(name);
         return codec.decode(element);
     }
 
