@@ -32,6 +32,7 @@ public class ListOperations {
 			// Same key CAN theoretically exist for both map and list
 			// but its not tested
 			setSize(jedis, fieldKey, key, collectionName, 0);
+			rawLength = "0";
 
 //			// No length metadata = not a list!
 //			throw new IllegalStateException(
