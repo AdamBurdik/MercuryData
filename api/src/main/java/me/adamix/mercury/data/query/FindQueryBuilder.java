@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 
 public interface FindQueryBuilder<T> {
 	<U> @NotNull FindQueryBuilder<T> where(@NotNull Key fieldKey, @NotNull Codec<U> fieldCodec, @NotNull Predicate<U> filter);
+	<U> @NotNull FindQueryBuilder<T> where(@NotNull String fieldKey, @NotNull Codec<U> fieldCodec, @NotNull Predicate<U> filter);
 	<U> @NotNull FindQueryBuilder<T> withFieldFilter(@NotNull FieldFilter<U> filter);
 	@NotNull FindQueryBuilder<T> limit(int limit);
 

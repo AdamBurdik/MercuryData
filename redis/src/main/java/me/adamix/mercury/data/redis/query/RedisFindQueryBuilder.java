@@ -28,6 +28,12 @@ public class RedisFindQueryBuilder<T> implements FindQueryBuilder<T> {
 
 	@Override
 	public @NotNull <U> FindQueryBuilder<T> where(@NotNull Key fieldKey, @NotNull Codec<U> fieldCodec, @NotNull Predicate<U> filter) {
+		fieldFilters.add(new FieldFilter<>(fieldKey.toString(), fieldCodec, filter));
+		return this;
+	}
+
+	@Override
+	public @NotNull <U> FindQueryBuilder<T> where(@NotNull String fieldKey, @NotNull Codec<U> fieldCodec, @NotNull Predicate<U> filter) {
 		fieldFilters.add(new FieldFilter<>(fieldKey, fieldCodec, filter));
 		return this;
 	}
@@ -61,9 +67,11 @@ public class RedisFindQueryBuilder<T> implements FindQueryBuilder<T> {
 	}
 
 	public @NotNull List<FieldFilter<?>> getFieldFilter(@NotNull Key key) {
+		String stringKey = key.toString();
+
 		List<FieldFilter<?>> list = new ArrayList<>();
 		for (FieldFilter<?> fieldFilter : fieldFilters) {
-			if (fieldFilter.key().equals(key)) {
+			if (fieldFilter.key().equals(stringKey)) {
 				list.add(fieldFilter);
 			}
 		}
